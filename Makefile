@@ -1,5 +1,5 @@
 CC = gcc
-CFLAGS = -Wall
+CFLAGS = 
 
 default:
 	$(CC) $(CFLAGS) src/client.c -o client 
