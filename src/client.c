@@ -17,6 +17,15 @@
 #define ERROR -1
 #define BUFF_SIZE 512
 
+void clean_choice()
+{
+    char s;
+    do 
+    {
+        s = getchar();
+    }
+    while ('\n' != s && EOF != s);
+}
 
 void help()
 {
@@ -89,7 +98,7 @@ int main(int argc, char *argv[])
             case 2: 
                 printf("\n1 - Send message with delivery guarantee (TCP)\n");
                 printf("2 - Send message without delivery guarantee (UDP)\n");
-                scanf("%i", &message_choose);
+                scanf(" %i", &message_choose);
                 
                 if (message_choose == 1)
                 {
@@ -105,16 +114,23 @@ int main(int argc, char *argv[])
                 }
 
                 printf("Enter your message: ");
-                scanf("%s", message);
-
+                
+                clean_choice(); 
+                fgets(message, BUFF_SIZE, stdin); 
+                //scanf(" %s", message);
+                printf("\nVved: %s", message);
                 printf("\n");
                 memset(message_nick, 0, BUFF_SIZE);
 
                 strcat(message_nick, username);
                 strcat(message_nick, ": ");
                 strcat(message_nick, message);
-                
+            
+
                 memset(message, 0, BUFF_SIZE);
+
+                
+
                 if (socket_desc == ERROR)
                 {
                     perror("CL_Socket_err");
