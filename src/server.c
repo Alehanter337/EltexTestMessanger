@@ -98,29 +98,21 @@ int main(int argc, char* argv[])
                 //read(connfd, buff, BUFF_SIZE);
                 puts(buff);
 
-                while (1)
+                int acpt = accept(listenfd, (struct sockaddr *)&server, &sockaddr_len);
+                if (acpt == ERROR)
                 {
-                    int acpt = accept(listenfd, (struct sockaddr *)&server, &sockaddr_len);
-                    if (acpt == ERROR)
-                    {
-                        perror("SERV_accept_err");
-                        exit(EXIT_FAILURE);
-                    }
-                    int rcv = recv(acpt, buff, BUFF_SIZE, 0);
-                    if (rcv == ERROR)
-                    {
-                        perror("Recvfrom error!");
-                        exit(EXIT_FAILURE);
-                    }
-                printf("%s\n", buff);
+                    perror("SERV_accept_err");
+                    exit(EXIT_FAILURE);
                 }
+                int rcv = recv(acpt, buff, BUFF_SIZE, 0);
+                if (rcv == ERROR)
+                {
+                    perror("Recvfrom error!");
+                    exit(EXIT_FAILURE);
+                }
+                printf("%s\n", buff);
+                
 
-
-
-
-
-                //for send
-                //write(connfd, (ddconst char*)message, BUFF_SIZE);
                 close(connfd);
                 exit(EXIT_FAILURE);
             }
