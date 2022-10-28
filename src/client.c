@@ -1,4 +1,3 @@
-#include <asm-generic/socket.h>
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -14,9 +13,9 @@
 
 #define NO_ARGS 1
 #define MAX_ADDR_LEN 16
-#define MAX_USER_LEN 10
+#define MAX_USER_LEN 16
 #define ERROR -1
-#define BUFF_SIZE 256
+#define BUFF_SIZE 512
 
 
 void help()
@@ -38,12 +37,13 @@ void print_menu()
 int main(int argc, char *argv[])  
 {   
     struct sockaddr_in server;
-    int socket_desc = 0;
-    int flag = 1;
-    char server_address[MAX_ADDR_LEN] = { };
-    char username[MAX_USER_LEN] = { }; 
-    char group[MAX_USER_LEN] = "";
-    char message[BUFF_SIZE] = "HELLO ";
+    
+    int listener = 0, socket_desc = 0;
+    char server_address[MAX_ADDR_LEN] = { 0 };
+    char username[MAX_USER_LEN] = { 0 }; 
+    char group[MAX_USER_LEN] = { 0 };
+    char message[BUFF_SIZE] = { 0 };
+    char message_nick[BUFF_SIZE] = { 0 };
 
     int group_choose = 0;
     int action = 0;
@@ -69,8 +69,8 @@ int main(int argc, char *argv[])
     }
     int port = 7331;
     server.sin_family = AF_INET;
-    server.sin_addr.s_addr = inet_addr(server_address);
-    //server.sin_addr.s_addr = INADDR_BROADCAST;
+    //inet_aton(server_address, server.sin_addr.s_addr);
+    server.sin_addr.s_addr = htonl(INADDR_ANY);
     server.sin_port = htons(port);
     
     printf("Hello, %s!\n", username);
@@ -83,59 +83,68 @@ int main(int argc, char *argv[])
         switch(action) 
         {
             case 1:
-                printf("check inbox\n");
+                printf("Check inbox\n");
                 break;
 
             case 2: 
                 printf("\n1 - Send message with delivery guarantee (TCP)\n");
                 printf("2 - Send message without delivery guarantee (UDP)\n");
-                //scanf("%i", &message_choose);
-                message_choose = 2;
-                if (message_choose == 2)
+                scanf("%i", &message_choose);
+                
+                if (message_choose == 1)
                 {
-                    printf("\nUDP\n");
-                    socket_desc = socket(AF_INET, SOCK_DGRAM, 0);
-                    if (socket_desc == ERROR)
-                    {
-                        perror("CLIENT: Socket error!");
-                        exit(EXIT_FAILURE);
-                    }
-                    
-                    socklen_t sockaddr_len = sizeof(struct sockaddr_in);
-                    int serv = bind(socket_desc, (struct sockaddr *) &server, sockaddr_len);
-
-                    if (serv == ERROR)
-	                {
-		                perror("CLIENT: Bind error! ");
-		                exit(EXIT_FAILURE);
-	                } 
-
-                    int ret = setsockopt(socket_desc, SOL_SOCKET, SO_BROADCAST, &flag, sizeof(flag));
-                    if (ret == ERROR)
-                    {
-                        perror("CLIENT: Setsockopt error! ");
-                        exit(EXIT_FAILURE);
-                    }
-                    printf("Enter your message: "); 
-                    //scanf("%s\n", message);
-                    while(1)
-                    {
-	                int snd = sendto(socket_desc, message, BUFF_SIZE, 0, (struct sockaddr *)&server, sizeof(server));
-                    if (snd == ERROR)
-                    {
-                        perror("CLIENT: sendto error");
-                        exit(EXIT_FAILURE);
-                    }
-                    printf("Message send: %s\n", message);
-                    }
-	                close(socket_desc);
+                    printf("\nTCP\n");
+                    socket_desc = socket(AF_INET, SOCK_STREAM, 0);
                 }
 
+
+                if (message_choose == 2)
+                {
+                    socket_desc = socket(AF_INET, SOCK_DGRAM, 0);
+                    printf("\nUDP\n");
+                }
+
+                printf("Enter your message: ");
+                scanf("%s", message);
+
+                printf("\n");
+                memset(message_nick, 0, BUFF_SIZE);
+
+                strcat(message_nick, username);
+                strcat(message_nick, ": ");
+                strcat(message_nick, message);
+                
+                memset(message, 0, BUFF_SIZE);
+                if (socket_desc == ERROR)
+                {
+                    perror("CL_Socket_err");
+                    exit(EXIT_FAILURE);
+                }
+
+                socklen_t sockaddr_len = sizeof(struct sockaddr_in);
+                int serv = connect(socket_desc, (struct sockaddr *) &server, sockaddr_len);
+
+                if (serv == ERROR)
+	            {
+	                perror("CL_Connect_err");
+	                print_menu();
+                    break;
+                } 
+
+                printf("\n\n%s\n\n", message_nick);
+	            int snd = send(socket_desc, message_nick, BUFF_SIZE, 0);
+                if (snd == ERROR)
+                {
+                    perror("CL_Send_err");
+                    exit(EXIT_FAILURE);
+                }
+                    
+	            close(socket_desc);
                 print_menu();
-                break;
+                break; 
 
             case 3:
-                printf("show message delivery status\n");
+                printf("Show message delivery status\n");
                 break;
 
             case 4:
