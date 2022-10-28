@@ -14,6 +14,7 @@
 
 #define ERROR -1
 #define BUFF_SIZE 256
+#define MAX_USER_LEN 16
 #define MAX(X, Y) (((X) > (Y)) ? (X) : (Y))
 
 void config_parse(char *file_path)
@@ -38,8 +39,13 @@ int main(int argc, char* argv[])
     server.sin_family = AF_INET;
     server.sin_addr.s_addr = htonl(INADDR_ANY);
     server.sin_port = htons(port);
+    socklen_t len = sizeof(client);
 
-    
+    int namefd = socket(AF_INET, SOCK_DGRAM, 0);    
+    char username[MAX_USER_LEN];
+    recvfrom(namefd, username, MAX_USER_LEN, 0,
+                    (struct sockaddr*)&client, &len);
+    printf("\nuser logged: %s\n", username);
     socklen_t sockaddr_len = sizeof(struct sockaddr_in);
     
     /* Create TCP socket */
@@ -76,7 +82,6 @@ int main(int argc, char* argv[])
     FD_ZERO(&rset);
 
     int maxfd = MAX(listenfd, udpfd) + 1; 
-    socklen_t len = sizeof(client);
 
     while (1)
     {

@@ -7,6 +7,7 @@
 #include <netinet/in.h>
 #include <netinet/udp.h>
 #include <netinet/ip.h>
+#include <threads.h>
 #include <arpa/inet.h>
 
 #include "ParseConf/ParseConf.c"
@@ -53,6 +54,8 @@ int main(int argc, char *argv[])
     char group[MAX_USER_LEN] = { 0 };
     char message[BUFF_SIZE] = { 0 };
     char message_nick[BUFF_SIZE] = { 0 };
+    
+    
 
     int group_choose = 0;
     int action = 0;
@@ -74,6 +77,8 @@ int main(int argc, char *argv[])
         else if (strcmp(argv[i], "-u") == 0)
         {
             strcat(username, argv[i+1]);
+
+            
         }
     }
     int port = 7331;
@@ -83,6 +88,11 @@ int main(int argc, char *argv[])
     server.sin_port = htons(port);
     
     printf("Hello, %s!\n", username);
+
+    int namefd = socket(AF_INET, SOCK_DGRAM, 0);
+    send(namefd, username, sizeof(username), 0);
+    close(namefd);    
+
     print_menu();
 
     while(1)
@@ -99,7 +109,9 @@ int main(int argc, char *argv[])
                 printf("\n1 - Send message with delivery guarantee (TCP)\n");
                 printf("2 - Send message without delivery guarantee (UDP)\n");
                 scanf(" %i", &message_choose);
+
                 
+
                 if (message_choose == 1)
                 {
                     printf("\nTCP\n");
