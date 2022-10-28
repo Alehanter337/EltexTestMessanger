@@ -49,7 +49,7 @@ int main(int argc, char* argv[])
         perror("SERV_TCP_sock_err");
         exit(EXIT_FAILURE);
     }
-    bzero(&server, sizeof(server));
+    //bzero(&server, sizeof(server));
     
     if (bind(listenfd, (struct sockaddr *)&server, sizeof(server)) == ERROR)
     {

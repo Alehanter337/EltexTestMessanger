@@ -144,8 +144,9 @@ int main(int argc, char *argv[])
                         print_menu();
                         break;
                     }
-
-                    int snd = send(udpfd, message_nick, BUFF_SIZE, 0);
+                    
+                    int snd = sendto(udpfd, (const char*) message_nick,
+                            BUFF_SIZE, 0, (struct sockaddr*)&server, sizeof(server));
                     if (snd == ERROR)
                     {
                         perror("CL_Send_err");
@@ -155,7 +156,6 @@ int main(int argc, char *argv[])
                     //printf("Message from: ");
                     //int n = recvfrom(udpfd, (const char*)message, BUFF_SIZE,
                     //0, (const struct sockaddr*)&server, sizeof(server));
-                    
                     close(udpfd);
                     print_menu();
                     break;   
