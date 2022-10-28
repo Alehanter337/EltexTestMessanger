@@ -46,7 +46,7 @@ void print_menu()
 
 int main(int argc, char *argv[])  
 {   
-    struct sockaddr_in server;
+    struct sockaddr_in server, server_user;
     
     int listener = 0, socket_desc = 0;
     char server_address[MAX_ADDR_LEN] = { 0 };
@@ -55,7 +55,7 @@ int main(int argc, char *argv[])
     char message[BUFF_SIZE] = { 0 };
     char message_nick[BUFF_SIZE] = { 0 };
     
-    
+     
 
     int group_choose = 0;
     int action = 0;
@@ -87,10 +87,14 @@ int main(int argc, char *argv[])
     server.sin_addr.s_addr = htonl(INADDR_ANY);
     server.sin_port = htons(port);
     
+    server_user.sin_family = AF_INET;
+    server_user.sin_port = htons(1337);
+    server_user.sin_addr.s_addr = htonl(INADDR_ANY);
     printf("Hello, %s!\n", username);
 
     int namefd = socket(AF_INET, SOCK_DGRAM, 0);
-    send(namefd, username, sizeof(username), 0);
+    sendto(namefd, (const char*)username, strlen(username), 0,
+            (const struct sockaddr*)&server_user, sizeof(server_user));
     close(namefd);    
 
     print_menu();

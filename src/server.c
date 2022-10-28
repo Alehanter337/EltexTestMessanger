@@ -1,4 +1,3 @@
-#include <asm-generic/socket.h>
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -7,6 +6,7 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <netinet/udp.h>
+#include <pthread.h>
 #include <netinet/ip.h>
 #include <arpa/inet.h>
 
@@ -17,10 +17,45 @@
 #define MAX_USER_LEN 16
 #define MAX(X, Y) (((X) > (Y)) ? (X) : (Y))
 
+char username[MAX_USER_LEN];
+struct sockaddr_in client, server, server_user;
+socklen_t len = sizeof(client);
+
+FILE *fp = NULL;
+
 void config_parse(char *file_path)
 {
     Lines = ParseConf(file_path);
     displayKeyValue(Lines);
+}
+
+void *get_user_func()
+{
+    int namefd = socket(AF_INET, SOCK_DGRAM, 0);    
+    server_user.sin_family = AF_INET;
+    server_user.sin_addr.s_addr = htonl(INADDR_ANY);
+    server_user.sin_port = htons(1337);
+
+    if (bind(namefd, (struct sockaddr *)&server_user, sizeof(server_user)) == ERROR)
+    {
+        perror("name bind err");
+        exit(EXIT_FAILURE);
+    }
+    while(1)
+    { 
+        
+        recvfrom(namefd, username, MAX_USER_LEN, 0,
+            (struct sockaddr*)&client, &len);
+        strcat(username, ".txt");
+        fp = fopen(username, "a");
+
+    }
+    close(namefd);
+}
+
+void socket_for_username(pthread_t get_user)
+{
+    pthread_create(&get_user, NULL, get_user_func, NULL);
 }
 
 
@@ -29,23 +64,20 @@ int main(int argc, char* argv[])
     config_parse("src/config.conf");
 
     char *message;
+        
+    pthread_t get_user;
     pid_t childpid;
     fd_set rset;
-    struct sockaddr_in client, server;
-    int listener = 0;
     char buff[BUFF_SIZE];
-    int socket_desc = 0; 
     int port = 7331;
     server.sin_family = AF_INET;
     server.sin_addr.s_addr = htonl(INADDR_ANY);
     server.sin_port = htons(port);
-    socklen_t len = sizeof(client);
 
-    int namefd = socket(AF_INET, SOCK_DGRAM, 0);    
-    char username[MAX_USER_LEN];
-    recvfrom(namefd, username, MAX_USER_LEN, 0,
-                    (struct sockaddr*)&client, &len);
-    printf("\nuser logged: %s\n", username);
+
+    
+
+    socket_for_username(get_user);
     socklen_t sockaddr_len = sizeof(struct sockaddr_in);
     
     /* Create TCP socket */
