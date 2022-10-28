@@ -89,22 +89,17 @@ int main(int argc, char* argv[])
         if (FD_ISSET(listenfd, &rset))
         {
             int connfd = accept(listenfd, (struct sockaddr*)&client, &len);
+            if (connfd == ERROR)
+            {
+                perror("SERV_accept_err");
+                exit(EXIT_FAILURE);
+            }
             if ((childpid = fork()) == 0)
             {
                 close(listenfd);
                 bzero(buff, BUFF_SIZE);
-                
-            
-                //read(connfd, buff, BUFF_SIZE);
-                puts(buff);
-
-                int acpt = accept(listenfd, (struct sockaddr *)&server, &sockaddr_len);
-                if (acpt == ERROR)
-                {
-                    perror("SERV_accept_err");
-                    exit(EXIT_FAILURE);
-                }
-                int rcv = recv(acpt, buff, BUFF_SIZE, 0);
+                 
+                int rcv = recv(connfd, buff, BUFF_SIZE, 0);
                 if (rcv == ERROR)
                 {
                     perror("Recvfrom error!");
@@ -112,9 +107,8 @@ int main(int argc, char* argv[])
                 }
                 printf("%s\n", buff);
                 
-
                 close(connfd);
-                exit(EXIT_FAILURE);
+                exit(EXIT_SUCCESS);
             }
             close(connfd);
         }
