@@ -38,7 +38,7 @@ int main(int argc, char *argv[])
 {   
     struct sockaddr_in server;
     
-    int listener = 0, socket_desc = 0;
+    int listener = 0, listenfd, udpfd;
     char server_address[MAX_ADDR_LEN] = { 0 };
     char username[MAX_USER_LEN] = { 0 }; 
     char group[MAX_USER_LEN] = { 0 };
@@ -69,10 +69,11 @@ int main(int argc, char *argv[])
     }
     int port = 7331;
     server.sin_family = AF_INET;
-    //inet_aton(server_address, server.sin_addr.s_addr);
-    server.sin_addr.s_addr = htonl(INADDR_ANY);
+    server.sin_addr.s_addr = inet_addr(server_address);
     server.sin_port = htons(port);
     
+    socklen_t sockaddr_len = sizeof(struct sockaddr_in);
+
     printf("Hello, %s!\n", username);
     print_menu();
 
@@ -91,57 +92,75 @@ int main(int argc, char *argv[])
                 printf("2 - Send message without delivery guarantee (UDP)\n");
                 scanf("%i", &message_choose);
                 
-                if (message_choose == 1)
-                {
-                    printf("\nTCP\n");
-                    socket_desc = socket(AF_INET, SOCK_STREAM, 0);
-                }
-
-
-                if (message_choose == 2)
-                {
-                    socket_desc = socket(AF_INET, SOCK_DGRAM, 0);
-                    printf("\nUDP\n");
-                }
-
+                memset(message, 0, BUFF_SIZE); //clear entered message
+                
                 printf("Enter your message: ");
                 scanf("%s", message);
-
                 printf("\n");
-                memset(message_nick, 0, BUFF_SIZE);
+
+                memset(message_nick, 0, BUFF_SIZE); //clear sended message "USERNAME: MESSAGE"
 
                 strcat(message_nick, username);
                 strcat(message_nick, ": ");
                 strcat(message_nick, message);
-                
-                memset(message, 0, BUFF_SIZE);
-                if (socket_desc == ERROR)
+
+
+                /* TCP */
+                if (message_choose == 1)
                 {
-                    perror("CL_Socket_err");
-                    exit(EXIT_FAILURE);
-                }
-
-                socklen_t sockaddr_len = sizeof(struct sockaddr_in);
-                int serv = connect(socket_desc, (struct sockaddr *) &server, sockaddr_len);
-
-                if (serv == ERROR)
-	            {
-	                perror("CL_Connect_err");
-	                print_menu();
-                    break;
-                } 
-
-                printf("\n\n%s\n\n", message_nick);
-	            int snd = send(socket_desc, message_nick, BUFF_SIZE, 0);
-                if (snd == ERROR)
-                {
-                    perror("CL_Send_err");
-                    exit(EXIT_FAILURE);
-                }
+                    printf("\nTCP\n");
+                    listenfd = socket(AF_INET, SOCK_STREAM, 0);
+                    if (listenfd == ERROR)
+                    {
+                        perror("CL_TCP_sock_err");
+                        print_menu();
+                        break;
+                    }
                     
-	            close(socket_desc);
-                print_menu();
-                break; 
+                    if (connect(listenfd, (struct sockaddr*)&server, sizeof(server)) == ERROR)
+                    {
+                        perror("CL_Connect_err\n");
+                        print_menu();
+                        break;
+                    }                    
+                                        
+                    write(listenfd, message_nick, BUFF_SIZE);
+                    
+                    //to recieve
+                    //read(listenfd, message_nick, BUFF_SIZE);
+                    
+                    puts(message_nick);
+                    close(listenfd);
+                }
+
+                /* UDP */
+                if (message_choose == 2)
+                {
+                    printf("\nUDP\n");
+                    udpfd  = socket(AF_INET, SOCK_DGRAM, 0);
+                    if (udpfd == ERROR)
+                    {
+                        perror("CL_UDP_sock_err");
+                        print_menu();
+                        break;
+                    }
+
+                    int snd = send(udpfd, message_nick, BUFF_SIZE, 0);
+                    if (snd == ERROR)
+                    {
+                        perror("CL_Send_err");
+                        exit(EXIT_FAILURE);
+                    }
+
+                    //printf("Message from: ");
+                    //int n = recvfrom(udpfd, (const char*)message, BUFF_SIZE,
+                    //0, (const struct sockaddr*)&server, sizeof(server));
+                    
+                    close(udpfd);
+                    print_menu();
+                    break;   
+                }
+                printf("\n\n%s\n\n", message_nick);
 
             case 3:
                 printf("Show message delivery status\n");
