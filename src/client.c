@@ -7,7 +7,8 @@
 #include <netinet/in.h>
 #include <netinet/udp.h>
 #include <netinet/ip.h>
-#include <threads.h>
+//#include <threads.h>
+#include <pthread.h>
 #include <arpa/inet.h>
 
 #include "ParseConf/ParseConf.c"
