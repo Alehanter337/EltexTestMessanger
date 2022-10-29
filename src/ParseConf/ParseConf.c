@@ -56,7 +56,7 @@ int str_split(char *str,char *key,char *value)
 int displayKeyValue(ConfNODE *head){
 	ConfNODE *p = head;
 	while (p != NULL){
-		printf("key:%s	value:%s\n",p->key,p->value);
+		printf("%s = %s\n",p->key,p->value);
 		p = p->next;
 	}
 	return 0;

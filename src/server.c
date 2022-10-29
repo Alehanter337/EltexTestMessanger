@@ -8,6 +8,7 @@
 #include <netinet/udp.h>
 #include <pthread.h>
 #include <netinet/ip.h>
+#include <ctype.h>
 #include <arpa/inet.h>
 
 #include "ParseConf/ParseConf.c"
@@ -17,7 +18,7 @@
 #define MAX_USER_LEN 16
 #define MAX(X, Y) (((X) > (Y)) ? (X) : (Y))
 
-char username[MAX_USER_LEN];
+char username[MAX_USER_LEN] = { 0 };
 struct sockaddr_in client, server, server_user;
 socklen_t len = sizeof(client);
 
@@ -25,8 +26,11 @@ FILE *fp = NULL;
 
 void config_parse(char *file_path)
 {
+    int dot = 0;
     Lines = ParseConf(file_path);
+    printf("----CONFIG IS OK-----\n");
     displayKeyValue(Lines);
+    printf("\n");
 }
 
 void *get_user_func()
@@ -43,10 +47,9 @@ void *get_user_func()
     }
     while(1)
     { 
-        
         recvfrom(namefd, username, MAX_USER_LEN, 0,
             (struct sockaddr*)&client, &len);
-        strcat(username, ".txt");
+        strcat(username, ".inbox");
         fp = fopen(username, "a");
 
     }
@@ -63,19 +66,18 @@ int main(int argc, char* argv[])
 {
     config_parse("src/config.conf");
 
-    char *message;
-        
+    char *message = NULL;
+
     pthread_t get_user;
     pid_t childpid;
     fd_set rset;
-    char buff[BUFF_SIZE];
+    char buff[BUFF_SIZE] = { 0 };
+    char destination[MAX_USER_LEN] = { 0 };
     int port = 7331;
     server.sin_family = AF_INET;
     server.sin_addr.s_addr = htonl(INADDR_ANY);
     server.sin_port = htons(port);
 
-
-    
 
     socket_for_username(get_user);
     socklen_t sockaddr_len = sizeof(struct sockaddr_in);
@@ -87,7 +89,6 @@ int main(int argc, char* argv[])
         perror("SERV_TCP_sock_err");
         exit(EXIT_FAILURE);
     }
-    //bzero(&server, sizeof(server));
     
     if (bind(listenfd, (struct sockaddr *)&server, sizeof(server)) == ERROR)
     {
@@ -142,8 +143,17 @@ int main(int argc, char* argv[])
                     perror("Recvfrom error!");
                     exit(EXIT_FAILURE);
                 }
-                printf("%s\n", buff);
-                
+                int ctr = 0;
+                /* Get destination nickname */
+                while(isprint(buff[ctr]))
+                {   
+                    char buff_char = putchar(buff[ctr]);
+                    strcat(destination, &buff_char);
+                    ctr++;
+                }
+                printf("Dest: ");
+                printf("\n");
+                puts(buff);
                 close(connfd);
                 exit(EXIT_SUCCESS);
             }
@@ -155,6 +165,7 @@ int main(int argc, char* argv[])
             bzero(buff, BUFF_SIZE);
             int recvv = recvfrom(udpfd, buff, BUFF_SIZE, 0,
                     (struct sockaddr*)&client, &len);
+            
             puts(buff);
             
             //for send
@@ -163,75 +174,5 @@ int main(int argc, char* argv[])
         }
     }
 
-
-
-    /*
-    if (strcmp(getValue(Lines, "TCP"),"yes") == 0 ||
-        strcmp(getValue(Lines, "TCP"),"1") == 0 )
-    {
-        socket_desc = socket(AF_INET, SOCK_STREAM, 0); //TCP
-        
-        int serv = bind(socket_desc, (struct sockaddr *)&server, sockaddr_len);
-        if (serv == ERROR)
-        {
-            perror("SERV_bind_err");
-            exit(EXIT_FAILURE);
-        }
-
-        if (listen(socket_desc, 1) < 0) 
-        {
-            perror("SERV_listen_err");
-            exit(EXIT_FAILURE);
-        }
-
-
-        while (1)
-        {
-            int acpt = accept(socket_desc, (struct sockaddr *)&server, &sockaddr_len);
-            if (acpt == ERROR)
-            {
-                perror("SERV_accept_err");
-                exit(EXIT_FAILURE);
-            }
-            int rcv = recv(acpt, buff, BUFF_SIZE, 0);
-            if (rcv == ERROR)
-            {
-                perror("Recvfrom error!");
-                exit(EXIT_FAILURE);
-            }
-            printf("%s\n", buff);
-        }
-    }
-     
-    else if (strcmp(getValue(Lines, "UDP"),"yes") == 0 ||
-             strcmp(getValue(Lines, "UDP"),"1") == 0 )
-    {
-        socket_desc = socket(AF_INET, SOCK_DGRAM, 0); //UDP
-        if (socket_desc == ERROR)
-        {
-            perror("SERVER: Socket error!");
-            exit(EXIT_FAILURE);
-        }
-    
-        int serv = bind(socket_desc, (struct sockaddr *)&server, sockaddr_len);
-        if (serv == ERROR)
-        {
-            perror("SERVER: Bind error!");
-            exit(EXIT_FAILURE);
-        }
-    
-        while (1)
-        {
-            int rcv = recvfrom(socket_desc, buff, BUFF_SIZE, 0, NULL, NULL);
-            if (rcv == ERROR)
-            {
-                perror("Recvfrom error!");
-                exit(EXIT_FAILURE);
-            }
-            printf("%s\n", buff);
-        }
-    }
-    close(socket_desc);
-    */
     freeConf(Lines);
 }
