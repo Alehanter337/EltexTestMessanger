@@ -51,7 +51,6 @@ void *get_user_func()
     { 
         recvfrom(namefd, username, MAX_USER_LEN, 0,
             (struct sockaddr*)&client, &len);
-        //strcat(username, ".inbox");
         fp = fopen(username, "a");
         fclose(fp);
         bzero(username, MAX_USER_LEN);
@@ -73,12 +72,14 @@ void *get_dest_func()
     }
     bzero(destination, MAX_USER_LEN);
     while(1)
-    { 
+    {
         recvfrom(destfd, destination, MAX_USER_LEN, 0,
             (struct sockaddr*)&client, &len);
+        
+        printf("DEST: %s", destination);
         fp = fopen(destination, "a");
         fclose(fp);
-
+        bzero(destination, MAX_USER_LEN);
     }
     close(destfd);
 }
@@ -114,6 +115,7 @@ int main(int argc, char* argv[])
 
     socket_for_username(get_user);
     socket_for_destination(get_dest);
+
     socklen_t sockaddr_len = sizeof(struct sockaddr_in);
     
     /* Create TCP socket */
@@ -190,10 +192,9 @@ int main(int argc, char* argv[])
                 //strcat(destination, ".inbox");
 
                 printf("Message recieved\n| Username: Message | \n  %s", buff);
-                
-                fp = fopen(destination, "a");
-                fprintf(fp, "%s", buff);
-                fclose(fp);
+                //fp = fopen(destination, "a");
+                //fprintf(fp, "%s", buff);
+                //fclose(fp);
                 bzero(destination, MAX_USER_LEN);
                 close(connfd);
                 exit(EXIT_SUCCESS);

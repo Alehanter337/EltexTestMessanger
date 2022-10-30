@@ -78,8 +78,6 @@ int main(int argc, char *argv[])
         else if (strcmp(argv[i], "-u") == 0)
         {
             strcat(username, argv[i+1]);
-
-            
         }
     }
 
@@ -95,7 +93,7 @@ int main(int argc, char *argv[])
 
     server_dest.sin_family = AF_INET;
     server_dest.sin_port = htons(1338);
-    inet_aton(server_address, &server_user.sin_addr);
+    inet_aton(server_address, &server_dest.sin_addr);
     printf("Hello, %s!\n", username);
 
     int namefd = socket(AF_INET, SOCK_DGRAM, 0);
@@ -168,10 +166,10 @@ int main(int argc, char *argv[])
                 } 
 
                 printf("\n\n%s\n\n", message_nick);
-                int namefd = socket(AF_INET, SOCK_DGRAM, 0);
-                sendto(namefd, (const char*)destination, strlen(destination), 0,
-                        (const struct sockaddr*)&server_user, sizeof(server_user));
-                close(namefd);
+                int destfd = socket(AF_INET, SOCK_DGRAM, 0);
+                sendto(destfd, (const char*)destination, strlen(destination), 0,
+                        (const struct sockaddr*)&server_dest, sizeof(server_dest));
+                close(destfd);
 
             
 	            int snd = send(socket_desc, message_nick, BUFF_SIZE, 0);
