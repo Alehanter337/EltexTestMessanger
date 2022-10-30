@@ -46,11 +46,11 @@ void print_menu()
 
 int main(int argc, char *argv[])  
 {   
-    struct sockaddr_in server, server_user;
+    struct sockaddr_in server, server_user, server_dest;
     
     int listener = 0, socket_desc = 0;
     char server_address[MAX_ADDR_LEN] = { 0 };
-    char username[MAX_USER_LEN] = { 0 }; 
+    char username[MAX_USER_LEN] = ""; 
     char destination[MAX_USER_LEN] = { 0 };
     char group[MAX_USER_LEN] = { 0 };
     char message[BUFF_SIZE] = { 0 };
@@ -82,16 +82,20 @@ int main(int argc, char *argv[])
             
         }
     }
-    int port = 7331;
+
     server.sin_family = AF_INET;
     inet_aton(server_address, &server.sin_addr);
     //server.sin_addr.s_addr = htonl(INADDR_ANY);
-    server.sin_port = htons(port);
+    server.sin_port = htons(7331);
     
     server_user.sin_family = AF_INET;
     server_user.sin_port = htons(1337);
     inet_aton(server_address, &server_user.sin_addr);
     //server_user.sin_addr.s_addr = htonl(INADDR_ANY);
+
+    server_dest.sin_family = AF_INET;
+    server_dest.sin_port = htons(1338);
+    inet_aton(server_address, &server_user.sin_addr);
     printf("Hello, %s!\n", username);
 
     int namefd = socket(AF_INET, SOCK_DGRAM, 0);
@@ -139,16 +143,14 @@ int main(int argc, char *argv[])
                 fgets(destination, MAX_USER_LEN, stdin); 
 
                 memset(message_nick, 0, BUFF_SIZE);
-                strcat(message_nick, destination);
+                //strcat(message_nick, destination);
                 strcat(message_nick, username);
                 strcat(message_nick, ": ");
                 strcat(message_nick, message);
                 
 
                 memset(message, 0, BUFF_SIZE);
-
                 
-
                 if (socket_desc == ERROR)
                 {
                     perror("CL_Socket_err");
@@ -166,6 +168,12 @@ int main(int argc, char *argv[])
                 } 
 
                 printf("\n\n%s\n\n", message_nick);
+                int namefd = socket(AF_INET, SOCK_DGRAM, 0);
+                sendto(namefd, (const char*)destination, strlen(destination), 0,
+                        (const struct sockaddr*)&server_user, sizeof(server_user));
+                close(namefd);
+
+            
 	            int snd = send(socket_desc, message_nick, BUFF_SIZE, 0);
                 if (snd == ERROR)
                 {
