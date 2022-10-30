@@ -5,11 +5,8 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
-#include <netinet/udp.h>
 #include <pthread.h>
-#include <netinet/ip.h>
 #include <ctype.h>
-#include <arpa/inet.h>
 
 #include "ParseConf/ParseConf.c"
 
@@ -20,6 +17,7 @@
 
 char username[MAX_USER_LEN] = { 0 };
 char destination[MAX_USER_LEN] = { 0 };
+
 struct sockaddr_in client, server, server_user, server_dest;
 socklen_t len = sizeof(client);
 
@@ -106,7 +104,8 @@ int main(int argc, char* argv[])
     pthread_t get_dest;
     pid_t childpid;
     fd_set rset;
-    char buff[BUFF_SIZE] = { 0 };
+    //char buff[BUFF_SIZE] = { 0 };
+    char *buff;
     int port = 7331;
     server.sin_family = AF_INET;
     server.sin_addr.s_addr = htonl(INADDR_ANY);
@@ -191,7 +190,15 @@ int main(int argc, char* argv[])
 
                 //strcat(destination, ".inbox");
 
-                printf("Message recieved\n| Username: Message | \n  %s", buff);
+                printf("\n%s\n", buff);
+
+                    char *key = (char*) malloc(sizeof(char));
+                    char *value = (char*) malloc(sizeof(char));
+                    str_split(buff, key, value);
+                    strcpy(destination, key);
+                    strcpy(message, value);
+
+                printf("From %s\n%s", destination, message);
                 //fp = fopen(destination, "a");
                 //fprintf(fp, "%s", buff);
                 //fclose(fp);

@@ -2,12 +2,8 @@
 #include <string.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
-#include <netinet/udp.h>
-#include <netinet/ip.h>
-#include <pthread.h>
 #include <arpa/inet.h>
 
 #include "ParseConf/ParseConf.c"
@@ -94,6 +90,7 @@ int main(int argc, char *argv[])
     server_dest.sin_family = AF_INET;
     server_dest.sin_port = htons(1338);
     inet_aton(server_address, &server_dest.sin_addr);
+
     printf("Hello, %s!\n", username);
 
     int namefd = socket(AF_INET, SOCK_DGRAM, 0);
@@ -139,12 +136,14 @@ int main(int argc, char *argv[])
                 fgets(message, BUFF_SIZE, stdin); 
                 printf("Enter destination: ");
                 fgets(destination, MAX_USER_LEN, stdin); 
-
+                destination[ strlen(destination)-1 ] = '\0';
                 memset(message_nick, 0, BUFF_SIZE);
-                //strcat(message_nick, destination);
+                sprintf(message_nick, "%s=%s: %s", destination, username, message);
+                /*strcat(message_nick, destination);
+                strcat(message_nick, )
                 strcat(message_nick, username);
                 strcat(message_nick, ": ");
-                strcat(message_nick, message);
+                strcat(message_nick, message);*/
                 
 
                 memset(message, 0, BUFF_SIZE);
@@ -166,11 +165,12 @@ int main(int argc, char *argv[])
                 } 
 
                 printf("\n\n%s\n\n", message_nick);
+                /*
                 int destfd = socket(AF_INET, SOCK_DGRAM, 0);
                 sendto(destfd, (const char*)destination, strlen(destination), 0,
                         (const struct sockaddr*)&server_dest, sizeof(server_dest));
                 close(destfd);
-
+                */
             
 	            int snd = send(socket_desc, message_nick, BUFF_SIZE, 0);
                 if (snd == ERROR)

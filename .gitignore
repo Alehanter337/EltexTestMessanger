@@ -2,3 +2,4 @@
 !*.*
 !*/
 *.inbox
+.DS_Store
