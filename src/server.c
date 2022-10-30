@@ -24,6 +24,7 @@ socklen_t len = sizeof(client);
 
 FILE *fp = NULL;
 
+
 void config_parse(char *file_path)
 {
     int dot = 0;
@@ -145,15 +146,22 @@ int main(int argc, char* argv[])
                 }
                 int ctr = 0;
                 /* Get destination nickname */
+                printf("Recieved message\nTo: ");
                 while(isprint(buff[ctr]))
                 {   
                     char buff_char = putchar(buff[ctr]);
                     strcat(destination, &buff_char);
                     ctr++;
                 }
-                printf("Dest: ");
+
+                strcat(destination, ".inbox");
+                puts(destination);
+                fp = fopen(destination, "a");
+                fprintf(fp, "%s", buff - strlen(destination));
+                fclose(fp);
                 printf("\n");
                 puts(buff);
+                bzero(destination, MAX_USER_LEN);
                 close(connfd);
                 exit(EXIT_SUCCESS);
             }
@@ -163,11 +171,21 @@ int main(int argc, char* argv[])
         if (FD_ISSET(udpfd, &rset)) 
         {
             bzero(buff, BUFF_SIZE);
+            bzero(destination, MAX_USER_LEN);
             int recvv = recvfrom(udpfd, buff, BUFF_SIZE, 0,
                     (struct sockaddr*)&client, &len);
-            
-            puts(buff);
-            
+            int ctr = 0;
+            /* Get destination nickname */
+            printf("Recieved message\nTo: ");
+            while(isprint(buff[ctr]))
+            {   
+                char buff_char = putchar(buff[ctr]);
+                strcat(destination, &buff_char);
+                ctr++;
+            }
+            printf("\n");
+
+            printf("%s", buff + strlen(destination) - strlen(username));            
             //for send
             //sendto(udpfd, (const char*)message, sizeof(buff), 0,
             //        (struct sockaddr*)&client, sockaddr_len);
