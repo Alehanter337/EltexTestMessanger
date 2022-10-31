@@ -9,11 +9,8 @@
 #include <ctype.h>
 
 #include "ParseConf/ParseConf.c"
+#include "server.h"
 
-#define ERROR -1
-#define BUFF_SIZE 256
-#define MAX_USER_LEN 16
-#define MAX(X, Y) (((X) > (Y)) ? (X) : (Y))
 
 char username[MAX_USER_LEN] = { 0 };
 
@@ -22,6 +19,16 @@ socklen_t len = sizeof(client);
 
 FILE *fp = NULL;
 
+void left_to_var(char buff[BUFF_SIZE], char destination[MAX_USER_LEN])
+{
+    int i = 0;
+    while (buff[i] != '=')
+    {
+        destination[i] += buff[i];
+        buff[i] = ' ';
+        i++;
+    }
+}
 
 void config_parse(char *file_path)
 {
@@ -46,11 +53,39 @@ void *get_user_func()
     bzero(username, MAX_USER_LEN);
     while(1)
     { 
+        char inbox_buff[MAX_INBOX_LEN];
+        char user_buff[MAX_USER_LEN];
         recvfrom(namefd, username, MAX_USER_LEN, 0,
             (struct sockaddr*)&client, &len);
-        fp = fopen(username, "a");
-        fclose(fp);
-        bzero(username, MAX_USER_LEN);
+
+        if (strstr(username, "inbox") != 0)
+        {
+            left_to_var(username, user_buff);
+            char inbox[MAX_INBOX_LEN] = { 0 };
+
+            printf("%s request inbox\n", user_buff);  
+            fp = fopen(user_buff, "r");
+            while((fgets(inbox, MAX_INBOX_LEN/4, fp)) != NULL)
+            {          
+                strcat(inbox_buff, inbox);
+            }
+            puts(inbox_buff);
+            fclose(fp);
+
+            sendto(namefd, (const char*)inbox_buff, BUFF_SIZE, 0,
+                (struct sockaddr*)&client, sizeof(client));
+
+            bzero(inbox, MAX_INBOX_LEN);
+            bzero(inbox_buff, MAX_INBOX_LEN);
+            bzero(user_buff, MAX_USER_LEN);
+            bzero(username, MAX_USER_LEN);
+        }
+        else 
+        {
+            fp = fopen(username, "a");
+            fclose(fp);
+            bzero(username, MAX_USER_LEN);
+        }
     }
     close(namefd);
 }
@@ -146,20 +181,15 @@ int main(int argc, char* argv[])
                     perror("Recvfrom error!");
                     exit(EXIT_FAILURE);
                 }
-                
-                int i = 0;
-                while (buff[i] != '=')
-                {
-                    destination[i] += buff[i];
-                    buff[i] = ' ';
-                    i++;
-                }
-                
+
+                left_to_var(buff, destination);
+
                 printf("Message to %s\nFrom %s", 
                             destination, 
                             buff + strlen(destination) + 1);
 
                 fp = fopen(destination, "a");
+
                 /*delete from buff
                 spaces and '='
                 write to destination inbox file >_< */

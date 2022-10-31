@@ -7,12 +7,8 @@
 #include <arpa/inet.h>
 
 #include "ParseConf/ParseConf.c"
+#include "server.h"
 
-#define NO_ARGS 1
-#define MAX_ADDR_LEN 16
-#define MAX_USER_LEN 16
-#define ERROR -1
-#define BUFF_SIZE 512
 
 void clean_choice()
 {
@@ -100,6 +96,25 @@ int main(int argc, char *argv[])
         {
             case 1:
                 printf("Check inbox\n");
+                int exitt = 0;
+                char inbox_out[MAX_INBOX_LEN] = { 0 };
+                char inbox_req[BUFF_SIZE] = { 0 };
+                sprintf(inbox_req, "%s=inbox", username);
+
+                int inboxfd = socket(AF_INET, SOCK_DGRAM, 0);
+
+                sendto(inboxfd, (const char*)inbox_req, strlen(inbox_req), 0,
+                    (const struct sockaddr*)&server_user, sizeof(server_user));
+                socklen_t len = sizeof(server_user);
+
+                printf("|Username: Message|\n");
+                recvfrom(inboxfd, (char*) inbox_out, MAX_INBOX_LEN,
+                    0, (struct sockaddr*)&server_user, &len);
+                printf("%s\n", inbox_out);
+
+                close(inboxfd);
+
+                print_menu();
                 break;
 
             case 2: 
@@ -131,7 +146,8 @@ int main(int argc, char *argv[])
 
                 destination[strlen(destination) - 1] = '\0';
                 memset(message_nick, 0, BUFF_SIZE);
-                sprintf(message_nick, "%s=%s: %s", destination, username, message);                
+                sprintf(message_nick, "%s=%s: ", destination, username);
+                strcat(message_nick, message);                
 
                 memset(message, 0, BUFF_SIZE);
                 
