@@ -42,22 +42,20 @@ void print_menu()
 
 int main(int argc, char *argv[])  
 {   
-    struct sockaddr_in server, server_user, server_dest;
+    struct sockaddr_in server, server_user;
     
-    int listener = 0, socket_desc = 0;
+    int socket_desc = 0;
+    int group_choose = 0;
+    int action = 0;
+    int message_choose = 0;
+
     char server_address[MAX_ADDR_LEN] = { 0 };
-    char username[MAX_USER_LEN] = ""; 
+    char username[MAX_USER_LEN] = { 0 }; 
     char destination[MAX_USER_LEN] = { 0 };
     char group[MAX_USER_LEN] = { 0 };
     char message[BUFF_SIZE] = { 0 };
     char message_nick[BUFF_SIZE] = { 0 };
     
-     
-
-    int group_choose = 0;
-    int action = 0;
-    int message_choose = 0;
-
     if (argc <= NO_ARGS) 
     {
         help();
@@ -70,7 +68,7 @@ int main(int argc, char *argv[])
         {
             strcat(server_address, argv[i+1]);
         }
-    
+
         else if (strcmp(argv[i], "-u") == 0)
         {
             strcat(username, argv[i+1]);
@@ -79,17 +77,11 @@ int main(int argc, char *argv[])
 
     server.sin_family = AF_INET;
     inet_aton(server_address, &server.sin_addr);
-    //server.sin_addr.s_addr = htonl(INADDR_ANY);
     server.sin_port = htons(7331);
     
     server_user.sin_family = AF_INET;
     server_user.sin_port = htons(1337);
     inet_aton(server_address, &server_user.sin_addr);
-    //server_user.sin_addr.s_addr = htonl(INADDR_ANY);
-
-    server_dest.sin_family = AF_INET;
-    server_dest.sin_port = htons(1338);
-    inet_aton(server_address, &server_dest.sin_addr);
 
     printf("Hello, %s!\n", username);
 
@@ -131,20 +123,15 @@ int main(int argc, char *argv[])
                 }
 
                 printf("Enter your message: ");
-                
-                clean_choice(); 
+                clean_choice(); //delete splitting message
                 fgets(message, BUFF_SIZE, stdin); 
+
                 printf("Enter destination: ");
                 fgets(destination, MAX_USER_LEN, stdin); 
-                destination[ strlen(destination)-1 ] = '\0';
+
+                destination[strlen(destination) - 1] = '\0';
                 memset(message_nick, 0, BUFF_SIZE);
-                sprintf(message_nick, "%s=%s: %s", destination, username, message);
-                /*strcat(message_nick, destination);
-                strcat(message_nick, )
-                strcat(message_nick, username);
-                strcat(message_nick, ": ");
-                strcat(message_nick, message);*/
-                
+                sprintf(message_nick, "%s=%s: %s", destination, username, message);                
 
                 memset(message, 0, BUFF_SIZE);
                 
@@ -165,12 +152,6 @@ int main(int argc, char *argv[])
                 } 
 
                 printf("\n\n%s\n\n", message_nick);
-                /*
-                int destfd = socket(AF_INET, SOCK_DGRAM, 0);
-                sendto(destfd, (const char*)destination, strlen(destination), 0,
-                        (const struct sockaddr*)&server_dest, sizeof(server_dest));
-                close(destfd);
-                */
             
 	            int snd = send(socket_desc, message_nick, BUFF_SIZE, 0);
                 if (snd == ERROR)
