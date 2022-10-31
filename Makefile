@@ -1,5 +1,5 @@
 CC = gcc
-CFLAGS = 
+CFLAGS = -pthread
 
 default:
 	$(CC) $(CFLAGS) src/client.c -o client 
