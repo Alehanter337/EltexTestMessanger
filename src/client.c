@@ -96,7 +96,6 @@ int main(int argc, char *argv[])
         {
             case 1:
                 printf("Check inbox\n");
-                int exitt = 0;
                 char inbox_out[MAX_INBOX_LEN] = { 0 };
                 char inbox_req[BUFF_SIZE] = { 0 };
                 sprintf(inbox_req, "%s=inbox", username);

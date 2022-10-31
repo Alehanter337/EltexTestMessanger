@@ -198,7 +198,6 @@ int main(int argc, char* argv[])
                 bzero(destination, MAX_USER_LEN);
                 bzero(buff, BUFF_SIZE);
                 close(connfd);
-                exit(EXIT_SUCCESS);
             }
             close(connfd);
         }
@@ -209,21 +208,21 @@ int main(int argc, char* argv[])
             bzero(destination, MAX_USER_LEN);
             int recvv = recvfrom(udpfd, buff, BUFF_SIZE, 0,
                     (struct sockaddr*)&client, &len);
-            int ctr = 0;
-            /* Get destination nickname */
-            printf("Recieved message\nTo: ");
-            while(isprint(buff[ctr]))
-            {   
-                char buff_char = putchar(buff[ctr]);
-                strcat(destination, &buff_char);
-                ctr++;
-            }
-            printf("\n");
+            left_to_var(buff, destination);
 
-            printf("%s", buff + strlen(destination) - strlen(username));            
-            //for send
-            //sendto(udpfd, (const char*)message, sizeof(buff), 0,
-            //        (struct sockaddr*)&client, sockaddr_len);
+            printf("Message to %s\nFrom %s", 
+                    destination, 
+                    buff + strlen(destination) + 1);
+
+            fp = fopen(destination, "a");
+            /*delete from buff
+            spaces and '='
+            write to destination inbox file >_< */
+            fprintf(fp, "%s", buff + strlen(destination) + 1);
+            fclose(fp);
+            bzero(destination, MAX_USER_LEN);
+            bzero(buff, BUFF_SIZE);
+            close(udpfd);
         }
     }
 
