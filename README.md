@@ -20,10 +20,6 @@
 
 Настройки совершаются через файл `config.conf`, находящийся в папке `src`
 
-`TCP=yes` or `TCP=1`
-
-`UDP=yes` or `UDP=1`
-
 `LOG_LEVEL=0-3`//in progress
 
 
