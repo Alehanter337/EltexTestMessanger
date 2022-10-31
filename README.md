@@ -5,22 +5,28 @@
 # Сборка программы
 
 Для сборки в корневой папке используйте команду:
-> `make`
+
+`make`
 
 Для удаления бинарных файлов в корневой папке используйте команду:
-> `make clean`
+
+`make clean`
 
 # Запуск программ
 
 Запуск программы клиента:
-> `./client -s "server_address" -u "your_username"`
+
+`./client -s "server_address" -u "your_username"`
 
 Запуск сервера:
-> `./server`
+
+`./server`
 
 Настройки совершаются через файл `config.conf`, находящийся в папке `src`
 
-`LOG_LEVEL=0-3`//in progress
+`LOG_LEVEL=0 or 1`
+
+> where 0 - NO LOG INFO / 1 - LOG INFO IN TERMINAL
 
 
 [![Anurag's GitHub stats](https://github-readme-stats.vercel.app/api?username=alehanter337)](https://github.com/alehanter337/github-readme-stats)
