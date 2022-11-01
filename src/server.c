@@ -127,9 +127,12 @@ int main(int argc, char* argv[])
 {
     config_parse("src/config.conf");
 
+    int delay = 0;
+
     char message[BUFF_SIZE] = { 0 };
     char destination[MAX_USER_LEN] = { 0 };
     char buff[BUFF_SIZE] = { 0 };
+    char bufff[BUFF_SIZE] = { 0 };
 
     pthread_t get_user;
 
@@ -239,13 +242,28 @@ int main(int argc, char* argv[])
             bzero(destination, MAX_USER_LEN);
             int recvv = recvfrom(udpfd, buff, BUFF_SIZE, 0,
                     (struct sockaddr*)&client, &len);
-            left_to_var(buff, destination);
+            
+
+            if (strstr(buff, "DELAY:") != 0)
+            {
+                sscanf(buff, "DELAY: %d\n", &delay);
+            }
+            int counter = 0;
+            while (buff[counter] != '\n')
+            {
+                buff[counter] = ' ';
+                counter++;
+            }
+            strcat(bufff, buff + counter + 1);
+            puts(bufff);
+
+            left_to_var(bufff, destination);
 
             if (strcmp(log_level, "1") == EQUAL)
             {
                 printf("Message to %s\nFrom %s", 
                     destination, 
-                    buff + strlen(destination) + 1);
+                    bufff + strlen(destination) + 1);
             }
             sprintf(username_f, "clients/%s", destination);
             fp = fopen(username_f, "a");
