@@ -13,6 +13,7 @@
 
 
 char username[MAX_USER_LEN] = { 0 };
+char username_f[BUFF_SIZE] = { 0 };
 char* log_level = { 0 };
 
 struct sockaddr_in client, server, server_user;
@@ -79,8 +80,8 @@ void *get_user_func()
             {
                 printf("%s request inbox\n", user_buff);  
             }
-
-            fp = fopen(user_buff, "r");
+            sprintf(username_f, "clients/%s", user_buff);
+            fp = fopen(username_f, "r");
 
             while((fgets(inbox, MAX_INBOX_LEN/2, fp)) != NULL)
             {          
@@ -98,6 +99,7 @@ void *get_user_func()
             bzero(inbox, MAX_INBOX_LEN);
             bzero(inbox_buff, MAX_INBOX_LEN);
             bzero(user_buff, MAX_USER_LEN);
+            bzero(username_f, MAX_USER_LEN);
             bzero(username, MAX_USER_LEN);
         }
         else 
@@ -106,9 +108,11 @@ void *get_user_func()
             {
                 printf("\n%s connected to server!\n", username);
             }
-            fp = fopen(username, "a");
+            sprintf(username_f, "clients/%s", username);
+            fp = fopen(username_f, "a");
             fclose(fp);
             bzero(username, MAX_USER_LEN);
+            bzero(username_f, BUFF_SIZE);
         }
     }
     close(namefd);
@@ -213,8 +217,9 @@ int main(int argc, char* argv[])
                         destination, 
                         buff + strlen(destination) + 1);
                 }
-                fp = fopen(destination, "a");
-
+                sprintf(username_f, "clients/%s", destination);
+                fp = fopen(username_f, "a");
+                
                 /*delete from buff
                 spaces and '='
                 write to destination inbox file >_< */
@@ -241,7 +246,8 @@ int main(int argc, char* argv[])
                     destination, 
                     buff + strlen(destination) + 1);
             }
-            fp = fopen(destination, "a");
+            sprintf(username_f, "clients/%s", destination);
+            fp = fopen(username_f, "a");
             /*
             delete from buff spaces and '='
             write to destination inbox file >_< 

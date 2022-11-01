@@ -6,4 +6,4 @@ default:
 	$(CC) $(CFLAGS) src/server.c -o server
 
 clean:
-	rm -f client server
+	rm -f client server clients/*
