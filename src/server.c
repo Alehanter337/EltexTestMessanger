@@ -13,6 +13,7 @@
 
 
 char username[MAX_USER_LEN] = { 0 };
+char* log_level = { 0 };
 
 struct sockaddr_in client, server, server_user;
 socklen_t len = sizeof(client);
@@ -32,10 +33,18 @@ void left_to_var(char buff[BUFF_SIZE], char destination[MAX_USER_LEN])
 
 void config_parse(char *file_path)
 {
-    int dot = 0;
     Lines = ParseConf(file_path);
-    printf("----CONFIG IS OK----\n");
-    displayKeyValue(Lines);
+    log_level = Lines->value;
+    if (strcmp(log_level, "0") == 0 || strcmp(log_level, "1") == 0 )
+    {
+        displayKeyValue(Lines);
+        printf("----CONFIG IS OK----\n");
+    }
+    else 
+    {
+        printf("Bad config");
+        exit(EXIT_FAILURE);
+    }
 }
 
 void *get_user_func()
@@ -51,25 +60,36 @@ void *get_user_func()
         exit(EXIT_FAILURE);
     }
     bzero(username, MAX_USER_LEN);
+
     while(1)
     { 
-        char inbox_buff[MAX_INBOX_LEN];
-        char user_buff[MAX_USER_LEN];
+        char inbox_buff[MAX_INBOX_LEN] = { 0 };
+        char user_buff[MAX_USER_LEN] = { 0 };
+        char inbox[MAX_INBOX_LEN] = { 0 };
+        
+        /* recieve username when client connect */
         recvfrom(namefd, username, MAX_USER_LEN, 0,
             (struct sockaddr*)&client, &len);
 
         if (strstr(username, "inbox") != 0)
         {
             left_to_var(username, user_buff);
-            char inbox[MAX_INBOX_LEN] = { 0 };
+            
+            if (strcmp(log_level, "1") == EQUAL)
+            {
+                printf("%s request inbox\n", user_buff);  
+            }
 
-            printf("%s request inbox\n", user_buff);  
             fp = fopen(user_buff, "r");
-            while((fgets(inbox, MAX_INBOX_LEN/4, fp)) != NULL)
+
+            while((fgets(inbox, MAX_INBOX_LEN/2, fp)) != NULL)
             {          
                 strcat(inbox_buff, inbox);
             }
-            puts(inbox_buff);
+            if (strcmp(log_level, "1") == EQUAL)
+            {
+                puts(inbox_buff);
+            }
             fclose(fp);
 
             sendto(namefd, (const char*)inbox_buff, BUFF_SIZE, 0,
@@ -82,6 +102,10 @@ void *get_user_func()
         }
         else 
         {
+            if (strcmp(log_level, "1") == EQUAL)
+            {
+                printf("\n%s connected to server!\n", username);
+            }
             fp = fopen(username, "a");
             fclose(fp);
             bzero(username, MAX_USER_LEN);
@@ -90,12 +114,10 @@ void *get_user_func()
     close(namefd);
 }
 
-
 void socket_for_username(pthread_t get_user)
 {
     pthread_create(&get_user, NULL, get_user_func, NULL);
 }
-
 
 int main(int argc, char* argv[])
 {
@@ -111,11 +133,11 @@ int main(int argc, char* argv[])
 
     fd_set rset;
 
+    /* default socket's (TCP & UDP) for message settings */
     int port = 7331;
     server.sin_family = AF_INET;
     server.sin_addr.s_addr = htonl(INADDR_ANY);
     server.sin_port = htons(port);
-
 
     socket_for_username(get_user);
 
@@ -153,6 +175,7 @@ int main(int argc, char* argv[])
     
     FD_ZERO(&rset);
 
+    /* maximum num of fd ready */
     int maxfd = MAX(listenfd, udpfd) + 1; 
 
     while (1)
@@ -162,7 +185,7 @@ int main(int argc, char* argv[])
 
         int nready = select(maxfd, &rset, NULL, NULL, NULL);
 
-        
+        /* wait first socket that start listen */        
         if (FD_ISSET(listenfd, &rset))
         {
             int connfd = accept(listenfd, (struct sockaddr*)&client, &len);
@@ -184,10 +207,12 @@ int main(int argc, char* argv[])
 
                 left_to_var(buff, destination);
 
-                printf("Message to %s\nFrom %s", 
-                            destination, 
-                            buff + strlen(destination) + 1);
-
+                if (strcmp(log_level, "1") == EQUAL)
+                {
+                    printf("Message to %s\nFrom %s", 
+                        destination, 
+                        buff + strlen(destination) + 1);
+                }
                 fp = fopen(destination, "a");
 
                 /*delete from buff
@@ -210,14 +235,17 @@ int main(int argc, char* argv[])
                     (struct sockaddr*)&client, &len);
             left_to_var(buff, destination);
 
-            printf("Message to %s\nFrom %s", 
+            if (strcmp(log_level, "1") == EQUAL)
+            {
+                printf("Message to %s\nFrom %s", 
                     destination, 
                     buff + strlen(destination) + 1);
-
+            }
             fp = fopen(destination, "a");
-            /*delete from buff
-            spaces and '='
-            write to destination inbox file >_< */
+            /*
+            delete from buff spaces and '='
+            write to destination inbox file >_< 
+            */
             fprintf(fp, "%s", buff + strlen(destination) + 1);
             fclose(fp);
             bzero(destination, MAX_USER_LEN);
