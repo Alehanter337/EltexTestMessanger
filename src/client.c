@@ -119,16 +119,13 @@ int main(int argc, char *argv[])
             case 2: 
                 printf("\n1 - Send message with delivery guarantee (TCP)\n");
                 printf("2 - Send message without delivery guarantee (UDP)\n");
-                scanf(" %i", &message_choose);
-
-                
+                scanf(" %i", &message_choose);                
 
                 if (message_choose == 1)
                 {
                     printf("\nTCP\n");
                     socket_desc = socket(AF_INET, SOCK_STREAM, 0);
                 }
-
 
                 if (message_choose == 2)
                 {
@@ -144,11 +141,9 @@ int main(int argc, char *argv[])
                 fgets(destination, MAX_USER_LEN, stdin); 
 
                 destination[strlen(destination) - 1] = '\0';
-                memset(message_nick, 0, BUFF_SIZE);
+
                 sprintf(message_nick, "%s=%s: ", destination, username);
                 strcat(message_nick, message);                
-
-                memset(message, 0, BUFF_SIZE);
                 
                 if (socket_desc == ERROR)
                 {
@@ -174,7 +169,8 @@ int main(int argc, char *argv[])
                     perror("CL_Send_err");
                     exit(EXIT_FAILURE);
                 }
-                    
+                bzero(message_nick, BUFF_SIZE);
+                bzero(message, BUFF_SIZE);
 	            close(socket_desc);
                 print_menu();
                 break; 
