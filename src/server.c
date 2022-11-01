@@ -188,7 +188,7 @@ int main(int argc, char* argv[])
         /* wait first socket that start listen */        
         if (FD_ISSET(listenfd, &rset))
         {
-            int connfd = accept(listenfd, (struct sockaddr*)&client, &len);
+            int connfd = accept(listenfd, (struct sockaddr*)&client, &sockaddr_len);
             if (connfd == ERROR)
             {
                 perror("SERV_accept_err");
