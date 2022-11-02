@@ -13,13 +13,13 @@
 
 struct args {
     char username[MAX_USER_LEN];
-    char username_f[MAX_USER_LEN * 2];
+    char username_f[MAX_USERF_LEN];
     char message[MAX_USER_LEN];
     int delay;
 };
 
 char username[MAX_USER_LEN] = { 0 };
-char username_f[MAX_USER_LEN * 2] = { 0 };
+char username_f[MAX_USERF_LEN] = { 0 };
 char* log_level = { 0 };
 
 struct sockaddr_in client, server, server_user;
@@ -123,7 +123,7 @@ void *get_user_func()
             bzero(inbox, MAX_INBOX_LEN);
             bzero(inbox_buff, MAX_INBOX_LEN);
             bzero(user_buff, MAX_USER_LEN);
-            bzero(username_f, MAX_USER_LEN);
+            bzero(username_f, MAX_USERF_LEN);
             bzero(username, MAX_USER_LEN);
         }
         else 
@@ -136,7 +136,7 @@ void *get_user_func()
             fp = fopen(username_f, "a");
             fclose(fp);
             bzero(username, MAX_USER_LEN);
-            bzero(username_f, MAX_USER_LEN * 2);
+            bzero(username_f, MAX_USERF_LEN);
         }
     }
     close(namefd);
@@ -259,7 +259,7 @@ int main(int argc, char* argv[])
 
                 bzero(destination, MAX_USER_LEN);
                 bzero(message, BUFF_SIZE);
-                bzero(username_f, MAX_USER_LEN);
+                bzero(username_f, MAX_USERF_LEN);
                 bzero(buff, BUFF_SIZE);
 
                 close(connfd);
@@ -287,7 +287,6 @@ int main(int argc, char* argv[])
                 sprintf(Args->username_f, "clients/%s", destination);
                 strcat(Args->message, message);
                 pthread_create(&delay_sender, NULL, send_with_delay, (void *) Args);
-                //pthread_join(delay_sender, NULL);
                 free(Args);
             }
             
@@ -310,10 +309,10 @@ int main(int argc, char* argv[])
             
             bzero(destination, MAX_USER_LEN);
             bzero(message, BUFF_SIZE);
-            bzero(username_f, MAX_USER_LEN*2);
+            bzero(username_f, MAX_USERF_LEN);
             bzero(buff, BUFF_SIZE);
             close(udpfd);
-            //free(Args);
+            free(Args);
         }
     }
     freeConf(Lines);
