@@ -158,7 +158,7 @@ int main(int argc, char *argv[])
                 destination[strlen(destination) - 1] = '\0';
                 if (message_choose == 3)
                 {
-                    sprintf(message_nick, "DELAY:%d\n%s=%s: ", delay, destination, username);
+                    sprintf(message_nick, "DELAY:%d\n%s\n%s\n", delay, destination, username);
                 }
                 else 
                 {

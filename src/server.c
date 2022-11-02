@@ -13,7 +13,7 @@
 
 struct args {
     char username[MAX_USER_LEN];
-    char username_f[MAX_USER_LEN];
+    char username_f[MAX_USER_LEN * 2];
     char message[MAX_USER_LEN];
     int delay;
 };
@@ -56,9 +56,17 @@ void config_parse(char *file_path)
 
 void *send_with_delay(void *arg)
 {
-    puts("YA POTOK DELAY");
     sleep(((struct args*)arg)->delay);
     fp = fopen(((struct args*)arg)->username_f, "a");
+    
+    if (strcmp(log_level, "1") == EQUAL)
+    {
+    printf("Message with delay %d sec. to %s\nFrom %s: %s\n", 
+            ((struct args*)arg)->delay,
+            ((struct args*)arg)->username_f + 8, 
+            ((struct args*)arg)->username,
+            ((struct args*)arg)->message);
+                }
     fprintf(fp, "%s: %s\n", ((struct args*)arg)->username, ((struct args*)arg)->message);
     fclose(fp);
     return 0;
@@ -199,15 +207,15 @@ int main(int argc, char* argv[])
     FD_ZERO(&rset);
 
     /* maximum num of fd ready */
-    int maxfd = MAX(listenfd, udpfd) + 1; 
+    int maxfd = MAX(listenfd, udpfd) + 1;
 
     while (1)
     {
+ 
         FD_SET(listenfd, &rset);
         FD_SET(udpfd, &rset);
 
         int nready = select(maxfd, &rset, NULL, NULL, NULL);
-
         /* wait first socket that start listen */        
         if (FD_ISSET(listenfd, &rset))
         {
@@ -268,19 +276,18 @@ int main(int argc, char* argv[])
             if (strstr(buff, "DELAY:") != NULL)
             {
                 pthread_t delay_sender;
-                sscanf(buff, "DELAY: %d\n%s\n%s\n%s",
+                sscanf(buff, "DELAY:%d\n%s\n%s\n%s",
                     &delay,
                     destination,
                     username,
                     message);
                 
-                Args->delay = delay;    
+                Args->delay = delay; 
                 strcat(Args->username,username);
-                strcat(Args->username_f, "clients/");
-                strcat(Args->username_f,destination);
+                sprintf(Args->username_f, "clients/%s", destination);
                 strcat(Args->message, message);
                 pthread_create(&delay_sender, NULL, send_with_delay, (void *) Args);
-                pthread_join(delay_sender, NULL);
+                //pthread_join(delay_sender, NULL);
                 free(Args);
             }
             
@@ -300,12 +307,13 @@ int main(int argc, char* argv[])
                 fprintf(fp, "%s: %s\n", username, message);
                 fclose(fp);
             }
+            
             bzero(destination, MAX_USER_LEN);
             bzero(message, BUFF_SIZE);
             bzero(username_f, MAX_USER_LEN*2);
             bzero(buff, BUFF_SIZE);
             close(udpfd);
-            free(Args);
+            //free(Args);
         }
     }
     freeConf(Lines);
