@@ -11,9 +11,15 @@
 #include "ParseConf/ParseConf.c"
 #include "server.h"
 
+struct args {
+    char username[MAX_USER_LEN];
+    char username_f[MAX_USER_LEN * 2];
+    char message[MAX_USER_LEN];
+    int delay;
+};
 
 char username[MAX_USER_LEN] = { 0 };
-char username_f[BUFF_SIZE] = { 0 };
+char username_f[MAX_USER_LEN * 2] = { 0 };
 char* log_level = { 0 };
 
 struct sockaddr_in client, server, server_user;
@@ -46,6 +52,24 @@ void config_parse(char *file_path)
         printf("Bad config");
         exit(EXIT_FAILURE);
     }
+}
+
+void *send_with_delay(void *arg)
+{
+    sleep(((struct args*)arg)->delay);
+    fp = fopen(((struct args*)arg)->username_f, "a");
+    
+    if (strcmp(log_level, "1") == EQUAL)
+    {
+    printf("Message with delay %d sec. to %s\nFrom %s: %s\n", 
+            ((struct args*)arg)->delay,
+            ((struct args*)arg)->username_f + 8, 
+            ((struct args*)arg)->username,
+            ((struct args*)arg)->message);
+                }
+    fprintf(fp, "%s: %s\n", ((struct args*)arg)->username, ((struct args*)arg)->message);
+    fclose(fp);
+    return 0;
 }
 
 void *get_user_func()
@@ -112,7 +136,7 @@ void *get_user_func()
             fp = fopen(username_f, "a");
             fclose(fp);
             bzero(username, MAX_USER_LEN);
-            bzero(username_f, BUFF_SIZE);
+            bzero(username_f, MAX_USER_LEN * 2);
         }
     }
     close(namefd);
@@ -126,6 +150,9 @@ void socket_for_username(pthread_t get_user)
 int main(int argc, char* argv[])
 {
     config_parse("src/config.conf");
+
+    struct args *Args = (struct args *)malloc(sizeof(struct args));
+    int delay = 0;
 
     char message[BUFF_SIZE] = { 0 };
     char destination[MAX_USER_LEN] = { 0 };
@@ -180,15 +207,15 @@ int main(int argc, char* argv[])
     FD_ZERO(&rset);
 
     /* maximum num of fd ready */
-    int maxfd = MAX(listenfd, udpfd) + 1; 
+    int maxfd = MAX(listenfd, udpfd) + 1;
 
     while (1)
     {
+ 
         FD_SET(listenfd, &rset);
         FD_SET(udpfd, &rset);
 
         int nready = select(maxfd, &rset, NULL, NULL, NULL);
-
         /* wait first socket that start listen */        
         if (FD_ISSET(listenfd, &rset))
         {
@@ -198,9 +225,12 @@ int main(int argc, char* argv[])
                 perror("SERV_accept_err");
                 exit(EXIT_FAILURE);
             }
+
             if ((childpid = fork()) == 0)
             {
                 close(listenfd);
+
+                bzero(buff, BUFF_SIZE);
 
                 int rcv = recv(connfd, buff, BUFF_SIZE, 0);
                 if (rcv == ERROR)
@@ -209,24 +239,29 @@ int main(int argc, char* argv[])
                     exit(EXIT_FAILURE);
                 }
 
-                left_to_var(buff, destination);
+                sscanf(buff, "%s\n%s\n%s",
+                    destination,
+                    username,
+                    message);
 
                 if (strcmp(log_level, "1") == EQUAL)
                 {
-                    printf("Message to %s\nFrom %s", 
+                    printf("Message to %s\nFrom %s: %s\n", 
                         destination, 
-                        buff + strlen(destination) + 1);
+                        username,
+                        message);
                 }
+
                 sprintf(username_f, "clients/%s", destination);
                 fp = fopen(username_f, "a");
-                
-                /*delete from buff
-                spaces and '='
-                write to destination inbox file >_< */
-                fprintf(fp, "%s", buff + strlen(destination) + 1);
+                fprintf(fp, "%s: %s\n", username, message);
                 fclose(fp);
+
                 bzero(destination, MAX_USER_LEN);
+                bzero(message, BUFF_SIZE);
+                bzero(username_f, MAX_USER_LEN);
                 bzero(buff, BUFF_SIZE);
+
                 close(connfd);
                 exit(EXIT_SUCCESS);
             }
@@ -235,31 +270,51 @@ int main(int argc, char* argv[])
 
         if (FD_ISSET(udpfd, &rset)) 
         {
-            bzero(buff, BUFF_SIZE);
-            bzero(destination, MAX_USER_LEN);
             int recvv = recvfrom(udpfd, buff, BUFF_SIZE, 0,
                     (struct sockaddr*)&client, &len);
-            left_to_var(buff, destination);
-
-            if (strcmp(log_level, "1") == EQUAL)
+        
+            if (strstr(buff, "DELAY:") != NULL)
             {
-                printf("Message to %s\nFrom %s", 
-                    destination, 
-                    buff + strlen(destination) + 1);
+                pthread_t delay_sender;
+                sscanf(buff, "DELAY:%d\n%s\n%s\n%s",
+                    &delay,
+                    destination,
+                    username,
+                    message);
+                
+                Args->delay = delay; 
+                strcat(Args->username,username);
+                sprintf(Args->username_f, "clients/%s", destination);
+                strcat(Args->message, message);
+                pthread_create(&delay_sender, NULL, send_with_delay, (void *) Args);
+                //pthread_join(delay_sender, NULL);
+                free(Args);
             }
-            sprintf(username_f, "clients/%s", destination);
-            fp = fopen(username_f, "a");
-            /*
-            delete from buff spaces and '='
-            write to destination inbox file >_< 
-            */
-            fprintf(fp, "%s", buff + strlen(destination) + 1);
-            fclose(fp);
+            
+            else
+            {
+                sscanf(buff, "%s\n%s\n%s",
+                    destination,
+                    username,
+                    message);
+            
+                if (strcmp(log_level, "1") == EQUAL)
+                {
+                    printf("Message to %s\nFrom %s: %s\n", destination, username, message);
+                }
+                sprintf(username_f, "clients/%s", destination);
+                fp = fopen(username_f, "a");
+                fprintf(fp, "%s: %s\n", username, message);
+                fclose(fp);
+            }
+            
             bzero(destination, MAX_USER_LEN);
+            bzero(message, BUFF_SIZE);
+            bzero(username_f, MAX_USER_LEN*2);
             bzero(buff, BUFF_SIZE);
             close(udpfd);
+            //free(Args);
         }
     }
-
     freeConf(Lines);
 }

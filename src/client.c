@@ -39,11 +39,12 @@ void print_menu()
 int main(int argc, char *argv[])  
 {   
     struct sockaddr_in server, server_user;
-    
+
     int socket_desc = 0;
     int group_choose = 0;
     int action = 0;
     int message_choose = 0;
+    int delay = 0;
 
     char server_address[MAX_ADDR_LEN] = { 0 };
     char username[MAX_USER_LEN] = { 0 }; 
@@ -51,7 +52,7 @@ int main(int argc, char *argv[])
     char group[MAX_USER_LEN] = { 0 };
     char message[BUFF_SIZE] = { 0 };
     char message_nick[BUFF_SIZE] = { 0 };
-    
+
     if (argc <= NO_ARGS) 
     {
         help();
@@ -119,6 +120,7 @@ int main(int argc, char *argv[])
             case 2: 
                 printf("\n1 - Send message with delivery guarantee (TCP)\n");
                 printf("2 - Send message without delivery guarantee (UDP)\n");
+                printf("3 - Send message with delay (UDP)\n");
                 scanf(" %i", &message_choose);                
 
                 if (message_choose == 1)
@@ -133,6 +135,19 @@ int main(int argc, char *argv[])
                     printf("\nUDP\n");
                 }
 
+                if (message_choose == 3)
+                {
+                    socket_desc = socket(AF_INET, SOCK_DGRAM, 0);
+                    printf("\nUDP\nEnter delay: ");
+                    scanf("%d", &delay);
+                    
+                    while (delay < 0)
+                    {
+                        printf("\nEnter corrent delay > 0\n");
+                        scanf("%d", &delay);
+                    }
+                }
+
                 printf("Enter your message: ");
                 clean_choice(); //delete splitting message
                 fgets(message, BUFF_SIZE, stdin); 
@@ -141,10 +156,16 @@ int main(int argc, char *argv[])
                 fgets(destination, MAX_USER_LEN, stdin); 
 
                 destination[strlen(destination) - 1] = '\0';
-
-                sprintf(message_nick, "%s=%s: ", destination, username);
+                if (message_choose == 3)
+                {
+                    sprintf(message_nick, "DELAY:%d\n%s\n%s\n", delay, destination, username);
+                }
+                else 
+                {
+                    sprintf(message_nick, "%s\n%s\n", destination, username);
+                }
                 strcat(message_nick, message);                
-                
+                puts(message_nick);
                 if (socket_desc == ERROR)
                 {
                     perror("CL_Socket_err");
@@ -161,7 +182,7 @@ int main(int argc, char *argv[])
                     break;
                 } 
 
-                printf("\n\n%s\n\n", message_nick);
+                printf("\n%s\n", message_nick);
             
 	            int snd = send(socket_desc, message_nick, BUFF_SIZE, 0);
                 if (snd == ERROR)
