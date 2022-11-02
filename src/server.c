@@ -11,6 +11,12 @@
 #include "ParseConf/ParseConf.c"
 #include "server.h"
 
+struct args {
+    char username[MAX_USER_LEN];
+    char username_f[MAX_USER_LEN];
+    char message[MAX_USER_LEN];
+    int delay;
+};
 
 char username[MAX_USER_LEN] = { 0 };
 char username_f[MAX_USER_LEN * 2] = { 0 };
@@ -46,6 +52,16 @@ void config_parse(char *file_path)
         printf("Bad config");
         exit(EXIT_FAILURE);
     }
+}
+
+void *send_with_delay(void *arg)
+{
+    puts("YA POTOK DELAY");
+    sleep(((struct args*)arg)->delay);
+    fp = fopen(((struct args*)arg)->username_f, "a");
+    fprintf(fp, "%s: %s\n", ((struct args*)arg)->username, ((struct args*)arg)->message);
+    fclose(fp);
+    return 0;
 }
 
 void *get_user_func()
@@ -127,6 +143,7 @@ int main(int argc, char* argv[])
 {
     config_parse("src/config.conf");
 
+    struct args *Args = (struct args *)malloc(sizeof(struct args));
     int delay = 0;
 
     char message[BUFF_SIZE] = { 0 };
@@ -221,7 +238,7 @@ int main(int argc, char* argv[])
 
                 if (strcmp(log_level, "1") == EQUAL)
                 {
-                    printf("Message to %s\nFrom %s: %s", 
+                    printf("Message to %s\nFrom %s: %s\n", 
                         destination, 
                         username,
                         message);
@@ -229,7 +246,7 @@ int main(int argc, char* argv[])
 
                 sprintf(username_f, "clients/%s", destination);
                 fp = fopen(username_f, "a");
-                fprintf(fp, "%s: %s", username, message);
+                fprintf(fp, "%s: %s\n", username, message);
                 fclose(fp);
 
                 bzero(destination, MAX_USER_LEN);
@@ -250,11 +267,21 @@ int main(int argc, char* argv[])
         
             if (strstr(buff, "DELAY:") != NULL)
             {
+                pthread_t delay_sender;
                 sscanf(buff, "DELAY: %d\n%s\n%s\n%s",
                     &delay,
                     destination,
-                    username_f,
+                    username,
                     message);
+                
+                Args->delay = delay;    
+                strcat(Args->username,username);
+                strcat(Args->username_f, "clients/");
+                strcat(Args->username_f,destination);
+                strcat(Args->message, message);
+                pthread_create(&delay_sender, NULL, send_with_delay, (void *) Args);
+                pthread_join(delay_sender, NULL);
+                free(Args);
             }
             
             else
@@ -263,25 +290,23 @@ int main(int argc, char* argv[])
                     destination,
                     username,
                     message);
+            
+                if (strcmp(log_level, "1") == EQUAL)
+                {
+                    printf("Message to %s\nFrom %s: %s\n", destination, username, message);
+                }
+                sprintf(username_f, "clients/%s", destination);
+                fp = fopen(username_f, "a");
+                fprintf(fp, "%s: %s\n", username, message);
+                fclose(fp);
             }
-
-
-            if (strcmp(log_level, "1") == EQUAL)
-            {
-                printf("Message to %s\nFrom %s: %s\n", destination, username, message);
-            }
-            sprintf(username_f, "clients/%s", destination);
-            fp = fopen(username_f, "a");
-            fprintf(fp, "%s: %s\n", username, message);
-            fclose(fp);
-
             bzero(destination, MAX_USER_LEN);
             bzero(message, BUFF_SIZE);
             bzero(username_f, MAX_USER_LEN*2);
             bzero(buff, BUFF_SIZE);
             close(udpfd);
+            free(Args);
         }
     }
-
     freeConf(Lines);
 }
