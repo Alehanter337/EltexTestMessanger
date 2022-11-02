@@ -162,7 +162,7 @@ int main(int argc, char *argv[])
                 }
                 else 
                 {
-                    sprintf(message_nick, "%s=%s: ", destination, username);
+                    sprintf(message_nick, "%s\n%s\n", destination, username);
                 }
                 strcat(message_nick, message);                
                 puts(message_nick);
@@ -182,7 +182,7 @@ int main(int argc, char *argv[])
                     break;
                 } 
 
-                printf("\n\n%s\n\n", message_nick);
+                printf("\n%s\n", message_nick);
             
 	            int snd = send(socket_desc, message_nick, BUFF_SIZE, 0);
                 if (snd == ERROR)

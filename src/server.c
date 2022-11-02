@@ -13,7 +13,7 @@
 
 
 char username[MAX_USER_LEN] = { 0 };
-char username_f[BUFF_SIZE] = { 0 };
+char username_f[MAX_USER_LEN * 2] = { 0 };
 char* log_level = { 0 };
 
 struct sockaddr_in client, server, server_user;
@@ -112,7 +112,7 @@ void *get_user_func()
             fp = fopen(username_f, "a");
             fclose(fp);
             bzero(username, MAX_USER_LEN);
-            bzero(username_f, BUFF_SIZE);
+            bzero(username_f, MAX_USER_LEN * 2);
         }
     }
     close(namefd);
@@ -132,7 +132,6 @@ int main(int argc, char* argv[])
     char message[BUFF_SIZE] = { 0 };
     char destination[MAX_USER_LEN] = { 0 };
     char buff[BUFF_SIZE] = { 0 };
-    char bufff[BUFF_SIZE] = { 0 };
 
     pthread_t get_user;
 
@@ -201,9 +200,12 @@ int main(int argc, char* argv[])
                 perror("SERV_accept_err");
                 exit(EXIT_FAILURE);
             }
+
             if ((childpid = fork()) == 0)
             {
                 close(listenfd);
+
+                bzero(buff, BUFF_SIZE);
 
                 int rcv = recv(connfd, buff, BUFF_SIZE, 0);
                 if (rcv == ERROR)
@@ -212,24 +214,29 @@ int main(int argc, char* argv[])
                     exit(EXIT_FAILURE);
                 }
 
-                left_to_var(buff, destination);
+                sscanf(buff, "%s\n%s\n%s",
+                    destination,
+                    username,
+                    message);
 
                 if (strcmp(log_level, "1") == EQUAL)
                 {
-                    printf("Message to %s\nFrom %s", 
+                    printf("Message to %s\nFrom %s: %s", 
                         destination, 
-                        buff + strlen(destination) + 1);
+                        username,
+                        message);
                 }
+
                 sprintf(username_f, "clients/%s", destination);
                 fp = fopen(username_f, "a");
-                
-                /*delete from buff
-                spaces and '='
-                write to destination inbox file >_< */
-                fprintf(fp, "%s", buff + strlen(destination) + 1);
+                fprintf(fp, "%s: %s", username, message);
                 fclose(fp);
+
                 bzero(destination, MAX_USER_LEN);
+                bzero(message, BUFF_SIZE);
+                bzero(username_f, MAX_USER_LEN);
                 bzero(buff, BUFF_SIZE);
+
                 close(connfd);
                 exit(EXIT_SUCCESS);
             }
@@ -238,42 +245,39 @@ int main(int argc, char* argv[])
 
         if (FD_ISSET(udpfd, &rset)) 
         {
-            bzero(buff, BUFF_SIZE);
-            bzero(destination, MAX_USER_LEN);
             int recvv = recvfrom(udpfd, buff, BUFF_SIZE, 0,
                     (struct sockaddr*)&client, &len);
+        
+            if (strstr(buff, "DELAY:") != NULL)
+            {
+                sscanf(buff, "DELAY: %d\n%s\n%s\n%s",
+                    &delay,
+                    destination,
+                    username_f,
+                    message);
+            }
             
-
-            if (strstr(buff, "DELAY:") != 0)
+            else
             {
-                sscanf(buff, "DELAY: %d\n", &delay);
+                sscanf(buff, "%s\n%s\n%s",
+                    destination,
+                    username,
+                    message);
             }
-            int counter = 0;
-            while (buff[counter] != '\n')
-            {
-                buff[counter] = ' ';
-                counter++;
-            }
-            strcat(bufff, buff + counter + 1);
-            puts(bufff);
 
-            left_to_var(bufff, destination);
 
             if (strcmp(log_level, "1") == EQUAL)
             {
-                printf("Message to %s\nFrom %s", 
-                    destination, 
-                    bufff + strlen(destination) + 1);
+                printf("Message to %s\nFrom %s: %s\n", destination, username, message);
             }
             sprintf(username_f, "clients/%s", destination);
             fp = fopen(username_f, "a");
-            /*
-            delete from buff spaces and '='
-            write to destination inbox file >_< 
-            */
-            fprintf(fp, "%s", buff + strlen(destination) + 1);
+            fprintf(fp, "%s: %s\n", username, message);
             fclose(fp);
+
             bzero(destination, MAX_USER_LEN);
+            bzero(message, BUFF_SIZE);
+            bzero(username_f, MAX_USER_LEN*2);
             bzero(buff, BUFF_SIZE);
             close(udpfd);
         }
