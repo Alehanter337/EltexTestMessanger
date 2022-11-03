@@ -9,6 +9,31 @@
 #include "ParseConf/ParseConf.c"
 #include "server.h"
 
+FILE *fp = NULL;
+
+char username[MAX_USER_LEN] = { 0 }; 
+char group[MAX_USER_LEN] = " ";
+char group_f[MAX_USERF_LEN] = { 0 };
+
+int check_group()
+{
+    char in_file_names[MAX_INBOX_LEN] = { 0 };
+    char in_file_names_buff[MAX_INBOX_LEN] = { 0 };
+    char username_dots[MAX_USERF_LEN] = { 0 };
+    sprintf(username_dots, "%s:", username);
+    sprintf(group_f, "groups/%s", group);
+    fp = fopen(group_f, "r");
+
+    while ((fgets(in_file_names, MAX_INBOX_LEN/2, fp)) != NULL)
+    {
+        strcat(in_file_names_buff, in_file_names);
+    }
+
+    if (strstr(in_file_names_buff, username_dots) != NULL) //if file have username
+    {
+        
+    }
+}
 
 void clean_choice()
 {
@@ -27,6 +52,17 @@ void help()
 
 void print_menu()
 {
+    printf("\nUser: %s\n", username);
+    if (strcmp(group, " ") == 0)
+    {
+        puts("Not in group");
+    }
+    
+    else 
+    {
+        printf("Group: \"%s\"\n", group);
+    }
+
     printf("\nChoose action:\n");
     printf("1 - Check inbox\n");
     printf("2 - Send message\n");
@@ -46,9 +82,7 @@ int main(int argc, char *argv[])
     int delay = 0;
 
     char server_address[MAX_ADDR_LEN] = { 0 };
-    char username[MAX_USER_LEN] = { 0 }; 
     char destination[MAX_USER_LEN] = { 0 };
-    char group[MAX_USER_LEN] = { 0 };
     char message[BUFF_SIZE] = { 0 };
     char message_nick[BUFF_SIZE] = { 0 };
 
@@ -68,7 +102,7 @@ int main(int argc, char *argv[])
         else if (strcmp(argv[i], "-u") == 0)
         {
             strcat(username, argv[i+1]);
-            if (strcmp(username, " ") != 0)
+            if (strcmp(username, " ") == 0)
             {
                 puts("Error: Username is empty!");
                 exit(EXIT_FAILURE);
@@ -83,8 +117,6 @@ int main(int argc, char *argv[])
     server_user.sin_family = AF_INET;
     server_user.sin_port = htons(1337);
     inet_aton(server_address, &server_user.sin_addr);
-
-    printf("Hello, %s!\n", username);
 
     int namefd = socket(AF_INET, SOCK_DGRAM, 0);
     sendto(namefd, (const char*)username, strlen(username), 0,
@@ -207,21 +239,31 @@ int main(int argc, char *argv[])
                 printf("2 - Beta\n");
                 printf("3 - Omega\n");
                 
+                
+                check_group();
+
+                if (strcmp(group, " ") != 0) //if group != "No group"
+                {
+                    printf("\nYou need to leave your group \"%s\" first!\n", group);
+                    print_menu();
+                    break;
+                }
+
                 scanf("%i", &group_choose);
                 
                 if (group_choose == 1)
                 {
-                    strcat(group, "Alpha");
+                    strcpy(group, "Alpha");
                 }
 
                 else if (group_choose == 2)
                 {
-                    strcat(group, "Beta");
+                    strcpy(group, "Beta");
                 }
 
                 else if (group_choose == 3)
                 {
-                    strcat(group, "Omega");
+                    strcpy(group, "Omega");
                 }
                 
                 else
@@ -237,14 +279,15 @@ int main(int argc, char *argv[])
             case 4: 
                 printf("\nLeave the group\n");
                 
-                if (strcmp(group, "") == 0)
+                if (strcmp(group, " ") == 0)
                 {
                     printf("Not in group now\n");
                     print_menu();
                     break;
                 }
                 
-                printf("Leaved from \"%s\"\n", group);         
+                printf("Leaved from \"%s\"\n", group);  
+                strcpy(group, "No group");       
                 print_menu();
                 break;
             

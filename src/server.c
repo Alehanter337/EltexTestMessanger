@@ -111,7 +111,7 @@ void *get_user_func()
             sprintf(username_f, "clients/%s", user_buff);
             fp = fopen(username_f, "r");
 
-            while((fgets(inbox, MAX_INBOX_LEN/2, fp)) != NULL)
+            while ((fgets(inbox, MAX_INBOX_LEN/2, fp)) != NULL)
             {          
                 strcat(inbox_buff, inbox);
             }
