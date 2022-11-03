@@ -19,6 +19,9 @@ struct args {
     int delay;
 };
 
+int recvd_udp_msg = 0;
+int recvd_tcp_msg = 0;
+
 char username[MAX_USER_LEN] = { 0 };
 char username_f[MAX_USERF_LEN] = { 0 };
 char* log_level = { 0 };
@@ -150,8 +153,8 @@ void socket_for_username(pthread_t get_user)
 
 void handler_sigusr1(int sig)
 {
-    puts("UDP stat");
-    puts("TCP stat");
+    printf("\n%d UDP recieved messages", recvd_udp_msg);
+    printf("\n%d TCP recieved messages\n", recvd_tcp_msg);
 }
 
 void handler_sigusr2(int sig)
@@ -226,7 +229,6 @@ int main(int argc, char* argv[])
 
     while (1)
     {
- 
         FD_SET(listenfd, &rset);
         FD_SET(udpfd, &rset);
 
@@ -271,7 +273,7 @@ int main(int argc, char* argv[])
                 fp = fopen(username_f, "a");
                 fprintf(fp, "%s: %s\n", username, message);
                 fclose(fp);
-
+                recvd_tcp_msg++;
                 bzero(destination, MAX_USER_LEN);
                 bzero(message, BUFF_SIZE);
                 bzero(username_f, MAX_USERF_LEN);
@@ -321,7 +323,7 @@ int main(int argc, char* argv[])
                 fprintf(fp, "%s: %s\n", username, message);
                 fclose(fp);
             }
-            
+            recvd_udp_msg++;
             bzero(destination, MAX_USER_LEN);
             bzero(message, BUFF_SIZE);
             bzero(username_f, MAX_USERF_LEN);

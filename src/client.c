@@ -68,6 +68,11 @@ int main(int argc, char *argv[])
         else if (strcmp(argv[i], "-u") == 0)
         {
             strcat(username, argv[i+1]);
+            if (strcmp(username, " ") != 0)
+            {
+                puts("Error: Username is empty!");
+                exit(EXIT_FAILURE);
+            }
         }
     }
 
