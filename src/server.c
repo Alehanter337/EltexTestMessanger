@@ -311,7 +311,6 @@ int main(int argc, char* argv[])
             bzero(message, BUFF_SIZE);
             bzero(username_f, MAX_USERF_LEN);
             bzero(buff, BUFF_SIZE);
-            free(Args);
         }
     }
     freeConf(Lines);
