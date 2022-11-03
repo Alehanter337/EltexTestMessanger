@@ -1,6 +1,7 @@
 #define ERROR -1
 #define NO_ARGS 1
 #define EQUAL 0
+#define DEL_CLIENTS_LEN 8
 #define BUFF_SIZE 256
 #define MAX_USER_LEN 16
 #define MAX_USERF_LEN 32

@@ -63,10 +63,10 @@ void *send_with_delay(void *arg)
     {
     printf("Message with delay %d sec. to %s\nFrom %s: %s\n", 
             ((struct args*)arg)->delay,
-            ((struct args*)arg)->username_f + 8, 
+            ((struct args*)arg)->username_f + DEL_CLIENTS_LEN, 
             ((struct args*)arg)->username,
             ((struct args*)arg)->message);
-                }
+    }
     fprintf(fp, "%s: %s\n", ((struct args*)arg)->username, ((struct args*)arg)->message);
     fclose(fp);
     return 0;
@@ -311,7 +311,6 @@ int main(int argc, char* argv[])
             bzero(message, BUFF_SIZE);
             bzero(username_f, MAX_USERF_LEN);
             bzero(buff, BUFF_SIZE);
-            close(udpfd);
             free(Args);
         }
     }
