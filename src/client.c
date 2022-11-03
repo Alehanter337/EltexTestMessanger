@@ -30,10 +30,9 @@ void print_menu()
     printf("\nChoose action:\n");
     printf("1 - Check inbox\n");
     printf("2 - Send message\n");
-    printf("3 - Show message delivery status\n");
-    printf("4 - Join the group\n");
-    printf("5 - Leave the group\n");
-    printf("6 - Exit\n");
+    printf("3 - Join the group\n");
+    printf("4 - Leave the group\n");
+    printf("5 - Exit\n");
 }
 
 int main(int argc, char *argv[])  
@@ -197,10 +196,6 @@ int main(int argc, char *argv[])
                 break; 
 
             case 3:
-                printf("Show message delivery status\n");
-                break;
-
-            case 4:
                 printf("\nJoin the group\n");
                 printf("Choose group:\n");
                 printf("1 - Alpha\n");
@@ -234,7 +229,7 @@ int main(int argc, char *argv[])
                 print_menu();
                 break;
 
-            case 5: 
+            case 4: 
                 printf("\nLeave the group\n");
                 
                 if (strcmp(group, "") == 0)
@@ -248,7 +243,7 @@ int main(int argc, char *argv[])
                 print_menu();
                 break;
             
-            case 6:
+            case 5:
                 return 0;
         }        
     }

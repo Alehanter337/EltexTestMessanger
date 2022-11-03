@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <signal.h>
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -147,8 +148,22 @@ void socket_for_username(pthread_t get_user)
     pthread_create(&get_user, NULL, get_user_func, NULL);
 }
 
+void handler_sigusr1(int sig)
+{
+    puts("UDP stat");
+    puts("TCP stat");
+}
+
+void handler_sigusr2(int sig)
+{
+    puts("GROUP STAT");
+}
+
 int main(int argc, char* argv[])
 {
+    signal(SIGUSR1, handler_sigusr1);
+    signal(SIGUSR2, handler_sigusr2);
+
     config_parse("src/config.conf");
 
     struct args *Args = (struct args *)malloc(sizeof(struct args));
