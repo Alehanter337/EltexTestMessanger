@@ -12,28 +12,11 @@
 FILE *fp = NULL;
 
 char username[MAX_USER_LEN] = { 0 }; 
-char group[MAX_USER_LEN] = " ";
+char username_f[MAX_USERF_LEN] = { 0 };
+
+char group[MAX_USER_LEN] = { 0 };
 char group_f[MAX_USERF_LEN] = { 0 };
 
-int check_group()
-{
-    char in_file_names[MAX_INBOX_LEN] = { 0 };
-    char in_file_names_buff[MAX_INBOX_LEN] = { 0 };
-    char username_dots[MAX_USERF_LEN] = { 0 };
-    sprintf(username_dots, "%s:", username);
-    sprintf(group_f, "groups/%s", group);
-    fp = fopen(group_f, "r");
-
-    while ((fgets(in_file_names, MAX_INBOX_LEN/2, fp)) != NULL)
-    {
-        strcat(in_file_names_buff, in_file_names);
-    }
-
-    if (strstr(in_file_names_buff, username_dots) != NULL) //if file have username
-    {
-        
-    }
-}
 
 void clean_choice()
 {
@@ -79,6 +62,7 @@ int main(int argc, char *argv[])
     int group_choose = 0;
     int action = 0;
     int message_choose = 0;
+    int group_flag = 0;
     int delay = 0;
 
     char server_address[MAX_ADDR_LEN] = { 0 };
@@ -110,6 +94,24 @@ int main(int argc, char *argv[])
         }
     }
 
+    sprintf(username_f, "groups/%s", username);
+    fp = fopen(username_f, "r");
+    if (!fp)
+    {
+        fp = fopen(username_f, "w");
+        fprintf(fp, "%s", "No group");
+        strcpy(group, "No group");
+    }
+    else
+    {
+        fp = fopen(username_f, "r");
+        while ((fgets(group_f, MAX_USER_LEN, fp)) != NULL)
+        {
+            strcpy(group, group_f);
+        }
+
+    }
+    fclose(fp);
     server.sin_family = AF_INET;
     inet_aton(server_address, &server.sin_addr);
     server.sin_port = htons(7331);
@@ -158,6 +160,7 @@ int main(int argc, char *argv[])
                 printf("2 - Send message without delivery guarantee (UDP)\n");
                 printf("3 - Send message with delay (UDP)\n");
                 scanf(" %i", &message_choose);                
+                
 
                 if (message_choose == 1)
                 {
@@ -183,22 +186,35 @@ int main(int argc, char *argv[])
                         scanf("%d", &delay);
                     }
                 }
+                puts("Send message to group?\n1 - Yes\n2 - No");
+                scanf("%d", &group_flag);
 
                 printf("Enter your message: ");
                 clean_choice(); //delete splitting message
                 fgets(message, BUFF_SIZE, stdin); 
 
-                printf("Enter destination: ");
-                fgets(destination, MAX_USER_LEN, stdin); 
+                if (group_flag != 1)
+                {
+                    printf("Enter destination: ");
+                    fgets(destination, MAX_USER_LEN, stdin); 
+                    destination[strlen(destination) - 1] = '\0';
+                }
 
-                destination[strlen(destination) - 1] = '\0';
                 if (message_choose == 3)
                 {
                     sprintf(message_nick, "DELAY:%d\n%s\n%s\n", delay, destination, username);
                 }
+
                 else 
                 {
-                    sprintf(message_nick, "%s\n%s\n", destination, username);
+                    if (group_flag == 1)
+                    {
+                        sprintf(message_nick, "TOGROUP:%s\n%s\n", group, username);
+                    }
+                    else 
+                    {
+                        sprintf(message_nick, "%s\n%s\n", destination, username);
+                    }
                 }
                 strcat(message_nick, message);                
                 puts(message_nick);
@@ -238,13 +254,11 @@ int main(int argc, char *argv[])
                 printf("1 - Alpha\n");
                 printf("2 - Beta\n");
                 printf("3 - Omega\n");
-                
-                
-                check_group();
 
-                if (strcmp(group, " ") != 0) //if group != "No group"
+                if (strcmp(group, "No group") != 0) //if group != "No group"
                 {
                     printf("\nYou need to leave your group \"%s\" first!\n", group);
+                    sleep(1);
                     print_menu();
                     break;
                 }
@@ -272,6 +286,11 @@ int main(int argc, char *argv[])
                     print_menu();
                     break;
                 }
+
+                fp = fopen(username_f, "w");
+                fprintf(fp, "%s", group);
+                fclose(fp);
+
                 printf("\nChoose group \"%s\"\n", group);
                 print_menu();
                 break;
@@ -279,7 +298,7 @@ int main(int argc, char *argv[])
             case 4: 
                 printf("\nLeave the group\n");
                 
-                if (strcmp(group, " ") == 0)
+                if (strcmp(group, "No group") == 0)
                 {
                     printf("Not in group now\n");
                     print_menu();
@@ -287,6 +306,9 @@ int main(int argc, char *argv[])
                 }
                 
                 printf("Leaved from \"%s\"\n", group);  
+                fp = fopen(username_f, "w");
+                fprintf(fp, "No group");
+                fclose(fp);
                 strcpy(group, "No group");       
                 print_menu();
                 break;

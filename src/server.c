@@ -171,9 +171,11 @@ int main(int argc, char* argv[])
 
     struct args *Args = (struct args *)malloc(sizeof(struct args));
     int delay = 0;
+    int group_flag = 0;
 
     char message[BUFF_SIZE] = { 0 };
     char destination[MAX_USER_LEN] = { 0 };
+    char user_group[MAX_USER_LEN] = { 0 };
     char buff[BUFF_SIZE] = { 0 };
 
     pthread_t get_user;
@@ -256,10 +258,22 @@ int main(int argc, char* argv[])
                     exit(EXIT_FAILURE);
                 }
 
-                sscanf(buff, "%s\n%s\n%s",
-                    destination,
+                if (strstr(buff, "TOGROUP:") != NULL)
+                {
+                    group_flag = 1;
+                    sscanf(buff, "TOGROUP:%s\n%s\n%s",
+                    user_group,
                     username,
                     message);
+                    strcpy(destination, user_group);
+                }
+                else
+                {
+                    sscanf(buff, "%s\n%s\n%s",
+                        destination,
+                        username,
+                        message);
+                }
 
                 if (strcmp(log_level, "1") == EQUAL)
                 {
@@ -306,23 +320,32 @@ int main(int argc, char* argv[])
                 pthread_create(&delay_sender, NULL, send_with_delay, (void *) Args);
                 free(Args);
             }
-            
+            else if (strstr(buff, "TOGROUP:") != NULL)
+            {
+                group_flag = 1;
+                sscanf(buff, "TOGROUP:%s\n%s\n%s",
+                    user_group,
+                    username,
+                    message);
+                    strcpy(destination, user_group);
+            }
+
             else
             {
                 sscanf(buff, "%s\n%s\n%s",
                     destination,
                     username,
                     message);
-            
-                if (strcmp(log_level, "1") == EQUAL)
-                {
-                    printf("Message to %s\nFrom %s: %s\n", destination, username, message);
-                }
-                sprintf(username_f, "clients/%s", destination);
-                fp = fopen(username_f, "a");
-                fprintf(fp, "%s: %s\n", username, message);
-                fclose(fp);
             }
+            if (strcmp(log_level, "1") == EQUAL)
+            {
+                printf("Message to %s\nFrom %s: %s\n", destination, username, message);
+            }
+            sprintf(username_f, "clients/%s", destination);
+            fp = fopen(username_f, "a");
+            fprintf(fp, "%s: %s\n", username, message);
+            fclose(fp);
+        
             recvd_udp_msg++;
             bzero(destination, MAX_USER_LEN);
             bzero(message, BUFF_SIZE);
