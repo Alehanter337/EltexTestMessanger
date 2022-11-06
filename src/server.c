@@ -79,28 +79,37 @@ void *send_with_delay(void *arg)
     sleep(((struct args *)arg)->delay);
     fp = fopen(((struct args *)arg)->username_f, "a");
 
-    if (strcmp(log_level, "1") == EQUAL)
+    if (fp == NULL)
     {
-        printf("Message with delay %d sec. to %s\nFrom %s: %s\n",
-               ((struct args *)arg)->delay,
-               ((struct args *)arg)->username_f + DEL_CLIENTS_LEN,
-               ((struct args *)arg)->username,
-               ((struct args *)arg)->message);
+        perror("Cannot open file");
     }
-    fprintf(fp, "%s: %s\n", ((struct args *)arg)->username, ((struct args *)arg)->message);
+    else
+    {
+        if (strcmp(log_level, "1") == EQUAL)
+        {
+            printf("Message with delay %d sec. to %s\nFrom %s: %s\n",
+                   ((struct args *)arg)->delay,
+                   ((struct args *)arg)->username_f + DEL_CLIENTS_LEN,
+                   ((struct args *)arg)->username,
+                   ((struct args *)arg)->message);
+        }
+        fprintf(fp, "%s: %s\n", ((struct args *)arg)->username, ((struct args *)arg)->message);
+    }
     fclose(fp);
     return 0;
 }
 
-
-
 void *get_user_func()
 {
+    char inbox_buff[MAX_INBOX_LEN] = {0};
+    char inbox[MAX_INBOX_LEN] = {0};
+    char group[MAX_USER_LEN] = {0};
     char user_message[BUFF_SIZE] = {0};
     char list_of_clients[MAX_INBOX_LEN] = {0};
     char delete_sub_buff[MAX_INBOX_LEN] = {0};
 
     int namefd = socket(AF_INET, SOCK_DGRAM, 0);
+
     server_user.sin_family = AF_INET;
     server_user.sin_addr.s_addr = htonl(INADDR_ANY);
     server_user.sin_port = htons(1337);
@@ -114,10 +123,6 @@ void *get_user_func()
 
     while (1)
     {
-        char inbox_buff[MAX_INBOX_LEN] = {0};
-        char inbox[MAX_INBOX_LEN] = {0};
-        char group[MAX_USER_LEN] = {0};
-
         /* recieve username when client connect */
         recvfrom(namefd, user_message, MAX_USER_LEN, 0,
                  (struct sockaddr *)&client, &len);
@@ -131,7 +136,9 @@ void *get_user_func()
                 printf("%s request inbox\n", username);
             }
             sprintf(username_f, "clients_inbox/%s", username);
+
             fp = fopen(username_f, "r");
+
             while ((fgets(inbox, MAX_INBOX_LEN / 2, fp)) != NULL)
             {
                 strcat(inbox_buff, inbox);
@@ -163,16 +170,16 @@ void *get_user_func()
 
             fp = fopen(username_f, "a");
             fclose(fp);
-            
+
             fp = fopen("List of clients", "r");
-            
+
             while ((fgets(list_of_clients, MAX_INBOX_LEN / 2, fp)) != NULL)
             {
                 strcat(delete_sub_buff, list_of_clients);
             }
-        
+
             fclose(fp);
-            
+
             if (strstr(delete_sub_buff, username) != NULL)
             {
                 fp = fopen("List of clients", "w");
@@ -242,11 +249,9 @@ int main(int argc, char *argv[])
         puts("Using default config");
         config_parse("src/config.conf");
     }
-    
+
     signal(SIGUSR1, handler_sigusr1);
     signal(SIGUSR2, handler_sigusr2);
-
-    config_parse("src/config.conf");
 
     struct args *Args = (struct args *)malloc(sizeof(struct args));
     int delay = 0;
@@ -324,7 +329,7 @@ int main(int argc, char *argv[])
                 exit(EXIT_FAILURE);
             }
             recvd_tcp_msg++;
-            printf("\n%d\n", recvd_tcp_msg);
+
             if ((childpid = fork()) == 0)
             {
                 close(listenfd);
@@ -382,7 +387,7 @@ int main(int argc, char *argv[])
             int recvv = recvfrom(udpfd, buff, BUFF_SIZE, 0,
                                  (struct sockaddr *)&client, &len);
             recvd_udp_msg++;
-            printf("\n%d\n", recvd_udp_msg);
+
             if (strstr(buff, "DELAY:") != NULL)
             {
                 pthread_t delay_sender;
