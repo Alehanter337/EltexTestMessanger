@@ -107,6 +107,7 @@ void *get_user_func()
     char user_message[BUFF_SIZE] = {0};
     char list_of_clients[MAX_INBOX_LEN] = {0};
     char delete_sub_buff[MAX_INBOX_LEN] = {0};
+    char user_plus_group[MAX_USERF_LEN] = {0};
 
     int namefd = socket(AF_INET, SOCK_DGRAM, 0);
 
@@ -166,8 +167,9 @@ void *get_user_func()
             {
                 printf("\n%s - %s connected to server!\n", username, group);
             }
-            sprintf(username_f, "clients_inbox/%s", username);
 
+            sprintf(username_f, "clients_inbox/%s", username);
+            
             fp = fopen(username_f, "a");
             fclose(fp);
 
@@ -175,27 +177,26 @@ void *get_user_func()
 
             while ((fgets(list_of_clients, MAX_INBOX_LEN / 2, fp)) != NULL)
             {
-                strcat(delete_sub_buff, list_of_clients);
+                if (strstr (list_of_clients, username) == NULL)
+                {
+                    strcat(delete_sub_buff, list_of_clients);
+                }
             }
+            fclose(fp);
+            fp = fopen("List of clients", "w");
+
+            sprintf(user_plus_group, "%s - %s\n", username, group);        
+            strcat(delete_sub_buff, user_plus_group);
+            fprintf(fp, "%s", delete_sub_buff);
 
             fclose(fp);
 
-            if (strstr(delete_sub_buff, username) != NULL)
-            {
-                fp = fopen("List of clients", "w");
-                fprintf(fp, "%s", delete_sub_buff);
-            }
-            else
-            {
-                fp = fopen("List of clients", "a");
-                fprintf(fp, "%s - %s\n", username, group);
-            }
-            fclose(fp);
             bzero(delete_sub_buff, MAX_INBOX_LEN);
             bzero(username, MAX_USER_LEN);
             bzero(user_message, BUFF_SIZE);
             bzero(group, MAX_USER_LEN);
             bzero(username_f, MAX_USERF_LEN);
+            bzero(user_plus_group, MAX_USERF_LEN);
         }
     }
     close(namefd);
