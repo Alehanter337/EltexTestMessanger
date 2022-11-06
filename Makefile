@@ -6,7 +6,7 @@ default:
 	$(CC) $(CFLAGS) src/server.c -o server
 
 clean:
-	rm -f client server clients/*
-	echo "_" >> clients/client.test 
-	echo "_" >> groups/group.test
+	rm -f client server clients_inbox/*
+	echo "_" >> clients_inbox/client.test 
 	rm -f groups/*
+	echo "_" >> groups/group.test
