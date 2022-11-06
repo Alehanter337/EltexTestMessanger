@@ -307,7 +307,15 @@ int main(int argc, char *argv[])
             fp = fopen(username_f, "w");
             fprintf(fp, "%s", group);
             fclose(fp);
+            sprintf(user_plus_group, "%s - %s", username, group);
 
+
+            int namefd = socket(AF_INET, SOCK_DGRAM, 0);
+            sendto(namefd, (const char *)user_plus_group, strlen(user_plus_group), 0,
+                   (const struct sockaddr *)&server_user, sizeof(server_user));
+            
+            close(namefd);
+            bzero(user_plus_group, MAX_USERF_LEN); 
             printf("\nChoose group \"%s\"\n", group);
             print_menu();
             break;
