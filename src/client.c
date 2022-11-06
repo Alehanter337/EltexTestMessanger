@@ -63,12 +63,15 @@ int main(int argc, char *argv[])
     int action = 0;
     int message_choose = 0;
     int group_flag = 0;
+    int group_inbox_flag = 0;
     int delay = 0;
 
     char server_address[MAX_ADDR_LEN] = {0};
     char destination[MAX_USER_LEN] = {0};
     char message[BUFF_SIZE] = {0};
     char message_nick[BUFF_SIZE] = {0};
+    char inbox_out[MAX_INBOX_LEN] = {0};
+    char inbox_req[BUFF_SIZE] = {0};
 
     if (argc <= NO_ARGS)
     {
@@ -137,10 +140,21 @@ int main(int argc, char *argv[])
         switch (action)
         {
         case 1:
+
             printf("Check inbox\n");
-            char inbox_out[MAX_INBOX_LEN] = {0};
-            char inbox_req[BUFF_SIZE] = {0};
-            sprintf(inbox_req, "%s=inbox", username);
+
+            puts("Check group inbox?\n1 - yes \n2 - no");
+            scanf("%d", &group_inbox_flag);
+
+            if (group_inbox_flag == 1)
+            {
+                sprintf(inbox_req, "%s=inbox", group);
+            }
+
+            else
+            {
+                sprintf(inbox_req, "%s=inbox", username);
+            }
 
             int inboxfd = socket(AF_INET, SOCK_DGRAM, 0);
 
@@ -151,7 +165,8 @@ int main(int argc, char *argv[])
             printf("|Username: Message|\n");
             recvfrom(inboxfd, (char *)inbox_out, MAX_INBOX_LEN,
                      0, (struct sockaddr *)&server_user, &len);
-            printf("%s\n", inbox_out);
+
+            puts(inbox_out);
 
             close(inboxfd);
 
