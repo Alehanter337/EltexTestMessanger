@@ -17,6 +17,8 @@ char username_f[MAX_USERF_LEN] = { 0 };
 char group[MAX_USER_LEN] = { 0 };
 char group_f[MAX_USERF_LEN] = { 0 };
 
+char user_plus_group[MAX_USERF_LEN] = { 0 };
+
 
 void clean_choice()
 {
@@ -96,11 +98,12 @@ int main(int argc, char *argv[])
 
     sprintf(username_f, "groups/%s", username);
     fp = fopen(username_f, "r");
+    //check exist file user with group
     if (!fp)
     {
         fp = fopen(username_f, "w");
-        fprintf(fp, "%s", "No group");
-        strcpy(group, "No group");
+        fprintf(fp, "%s", "No_group");
+        strcpy(group, "No_group");
     }
     else
     {
@@ -120,10 +123,14 @@ int main(int argc, char *argv[])
     server_user.sin_port = htons(1337);
     inet_aton(server_address, &server_user.sin_addr);
 
+
+    sprintf(user_plus_group, "%s - %s", username, group);
+
     int namefd = socket(AF_INET, SOCK_DGRAM, 0);
-    sendto(namefd, (const char*)username, strlen(username), 0,
+    sendto(namefd, (const char*)user_plus_group, strlen(user_plus_group), 0,
             (const struct sockaddr*)&server_user, sizeof(server_user));
-    close(namefd);    
+    close(namefd);  
+    bzero(user_plus_group, MAX_USERF_LEN);  
 
     print_menu();
 
@@ -255,7 +262,7 @@ int main(int argc, char *argv[])
                 printf("2 - Beta\n");
                 printf("3 - Omega\n");
 
-                if (strcmp(group, "No group") != 0) //if group != "No group"
+                if (strcmp(group, "No_group") != 0) //if group != "No_group"
                 {
                     printf("\nYou need to leave your group \"%s\" first!\n", group);
                     sleep(1);
@@ -298,7 +305,7 @@ int main(int argc, char *argv[])
             case 4: 
                 printf("\nLeave the group\n");
                 
-                if (strcmp(group, "No group") == 0)
+                if (strcmp(group, "No_group") == 0)
                 {
                     printf("Not in group now\n");
                     print_menu();
@@ -307,9 +314,9 @@ int main(int argc, char *argv[])
                 
                 printf("Leaved from \"%s\"\n", group);  
                 fp = fopen(username_f, "w");
-                fprintf(fp, "No group");
+                fprintf(fp, "No_group");
                 fclose(fp);
-                strcpy(group, "No group");       
+                strcpy(group, "No_group");       
                 print_menu();
                 break;
             
