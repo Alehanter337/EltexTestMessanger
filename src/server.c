@@ -135,7 +135,6 @@ void *get_user_func()
             }
             sprintf(username_f, "clients_inbox/%s", username);
             fp = fopen(username_f, "r");
-
             while ((fgets(inbox, MAX_INBOX_LEN / 2, fp)) != NULL)
             {
                 strcat(inbox_buff, inbox);
@@ -167,15 +166,16 @@ void *get_user_func()
 
             fp = fopen(username_f, "a");
             fclose(fp);
-
+            
             fp = fopen("List of clients", "r");
-
+            
             while ((fgets(list_of_clients, MAX_INBOX_LEN / 2, fp)) != NULL)
             {
                 strcat(delete_sub_buff, list_of_clients);
             }
-
+        
             fclose(fp);
+            
             if (strstr(delete_sub_buff, username) != NULL)
             {
                 fp = fopen("List of clients", "w");
@@ -416,5 +416,5 @@ int main(int argc, char *argv[])
             bzero(buff, BUFF_SIZE);
         }
     }
-    freeConf(Lines);
+    //freeConf(Lines);
 }
