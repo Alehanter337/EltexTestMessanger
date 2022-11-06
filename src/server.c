@@ -12,7 +12,8 @@
 #include "ParseConf/ParseConf.c"
 #include "server.h"
 
-struct args {
+struct args
+{
     char username[MAX_USER_LEN];
     char username_f[MAX_USERF_LEN];
     char message[MAX_USER_LEN];
@@ -22,14 +23,29 @@ struct args {
 int recvd_udp_msg = 0;
 int recvd_tcp_msg = 0;
 
-char username[MAX_USER_LEN] = { 0 };
-char username_f[MAX_USERF_LEN] = { 0 };
-char* log_level = { 0 };
+char username[MAX_USER_LEN] = {0};
+char username_f[MAX_USERF_LEN] = {0};
+
+char *log_level = {0};
 
 struct sockaddr_in client, server, server_user;
 socklen_t len = sizeof(client);
 
 FILE *fp = NULL;
+
+char *str_remove(char *str, const char *sub)
+{
+    size_t len = strlen(sub);
+    if (len > 0)
+    {
+        char *p = str;
+        while ((p = strstr(p, sub)) != NULL)
+        {
+            memmove(p, p + len, strlen(p + len) + 1);
+        }
+    }
+    return str;
+}
 
 void left_to_var(char buff[BUFF_SIZE], char destination[MAX_USER_LEN])
 {
@@ -46,12 +62,12 @@ void config_parse(char *file_path)
 {
     Lines = ParseConf(file_path);
     log_level = Lines->value;
-    if (strcmp(log_level, "0") == 0 || strcmp(log_level, "1") == 0 )
+    if (strcmp(log_level, "0") == 0 || strcmp(log_level, "1") == 0)
     {
         displayKeyValue(Lines);
         printf("----CONFIG IS OK----\n");
     }
-    else 
+    else
     {
         printf("Bad config");
         exit(EXIT_FAILURE);
@@ -60,25 +76,34 @@ void config_parse(char *file_path)
 
 void *send_with_delay(void *arg)
 {
-    sleep(((struct args*)arg)->delay);
-    fp = fopen(((struct args*)arg)->username_f, "a");
-    
+    sleep(((struct args *)arg)->delay);
+    fp = fopen(((struct args *)arg)->username_f, "a");
+
     if (strcmp(log_level, "1") == EQUAL)
     {
-    printf("Message with delay %d sec. to %s\nFrom %s: %s\n", 
-            ((struct args*)arg)->delay,
-            ((struct args*)arg)->username_f + DEL_CLIENTS_LEN, 
-            ((struct args*)arg)->username,
-            ((struct args*)arg)->message);
+        printf("Message with delay %d sec. to %s\nFrom %s: %s\n",
+               ((struct args *)arg)->delay,
+               ((struct args *)arg)->username_f + DEL_CLIENTS_LEN,
+               ((struct args *)arg)->username,
+               ((struct args *)arg)->message);
     }
-    fprintf(fp, "%s: %s\n", ((struct args*)arg)->username, ((struct args*)arg)->message);
+    fprintf(fp, "%s: %s\n", ((struct args *)arg)->username, ((struct args *)arg)->message);
     fclose(fp);
+    return 0;
+}
+
+void *write_group_func()
+{
     return 0;
 }
 
 void *get_user_func()
 {
-    int namefd = socket(AF_INET, SOCK_DGRAM, 0);    
+    char user_message[BUFF_SIZE] = {0};
+    char list_of_clients[MAX_INBOX_LEN] = {0};
+    char delete_sub_buff[MAX_INBOX_LEN] = {0};
+
+    int namefd = socket(AF_INET, SOCK_DGRAM, 0);
     server_user.sin_family = AF_INET;
     server_user.sin_addr.s_addr = htonl(INADDR_ANY);
     server_user.sin_port = htons(1337);
@@ -88,31 +113,31 @@ void *get_user_func()
         perror("name bind err");
         exit(EXIT_FAILURE);
     }
-    bzero(username, MAX_USER_LEN);
+    bzero(user_message, MAX_USER_LEN);
 
-    while(1)
-    { 
-        char inbox_buff[MAX_INBOX_LEN] = { 0 };
-        char user_buff[MAX_USER_LEN] = { 0 };
-        char inbox[MAX_INBOX_LEN] = { 0 };
-        
+    while (1)
+    {
+        char inbox_buff[MAX_INBOX_LEN] = {0};
+        char inbox[MAX_INBOX_LEN] = {0};
+        char group[MAX_USER_LEN] = {0};
+
         /* recieve username when client connect */
-        recvfrom(namefd, username, MAX_USER_LEN, 0,
-            (struct sockaddr*)&client, &len);
+        recvfrom(namefd, user_message, MAX_USER_LEN, 0,
+                 (struct sockaddr *)&client, &len);
 
-        if (strstr(username, "inbox") != 0)
+        if (strstr(user_message, "inbox") != 0)
         {
-            left_to_var(username, user_buff);
-            
+            left_to_var(user_message, username);
+
             if (strcmp(log_level, "1") == EQUAL)
             {
-                printf("%s request inbox\n", user_buff);  
+                printf("%s request inbox\n", username);
             }
-            sprintf(username_f, "clients/%s", user_buff);
+            sprintf(username_f, "clients_inbox/%s", username);
             fp = fopen(username_f, "r");
 
-            while((fgets(inbox, MAX_INBOX_LEN/2, fp)) != NULL)
-            {          
+            while ((fgets(inbox, MAX_INBOX_LEN / 2, fp)) != NULL)
+            {
                 strcat(inbox_buff, inbox);
             }
             if (strcmp(log_level, "1") == EQUAL)
@@ -121,25 +146,51 @@ void *get_user_func()
             }
             fclose(fp);
 
-            sendto(namefd, (const char*)inbox_buff, BUFF_SIZE, 0,
-                (struct sockaddr*)&client, sizeof(client));
+            sendto(namefd, (const char *)inbox_buff, BUFF_SIZE, 0,
+                   (struct sockaddr *)&client, sizeof(client));
 
             bzero(inbox, MAX_INBOX_LEN);
             bzero(inbox_buff, MAX_INBOX_LEN);
-            bzero(user_buff, MAX_USER_LEN);
+            bzero(user_message, BUFF_SIZE);
             bzero(username_f, MAX_USERF_LEN);
             bzero(username, MAX_USER_LEN);
         }
-        else 
+        else
         {
+            sscanf(user_message, "%s - %s", username, group);
+
             if (strcmp(log_level, "1") == EQUAL)
             {
-                printf("\n%s connected to server!\n", username);
+                printf("\n%s - %s connected to server!\n", username, group);
             }
-            sprintf(username_f, "clients/%s", username);
+            sprintf(username_f, "clients_inbox/%s", username);
+
             fp = fopen(username_f, "a");
             fclose(fp);
+
+            fp = fopen("List of clients", "r");
+
+            while ((fgets(list_of_clients, MAX_INBOX_LEN / 2, fp)) != NULL)
+            {
+                strcat(delete_sub_buff, list_of_clients);
+            }
+
+            fclose(fp);
+            if (strstr(delete_sub_buff, username) != NULL)
+            {
+                fp = fopen("List of clients", "w");
+                fprintf(fp, "%s", delete_sub_buff);
+            }
+            else
+            {
+                fp = fopen("List of clients", "a");
+                fprintf(fp, "%s - %s\n", username, group);
+            }
+            fclose(fp);
+            bzero(delete_sub_buff, MAX_INBOX_LEN);
             bzero(username, MAX_USER_LEN);
+            bzero(user_message, BUFF_SIZE);
+            bzero(group, MAX_USER_LEN);
             bzero(username_f, MAX_USERF_LEN);
         }
     }
@@ -159,10 +210,23 @@ void handler_sigusr1(int sig)
 
 void handler_sigusr2(int sig)
 {
-    puts("GROUP STAT");
+    char file_contain[MAX_INBOX_LEN] = {0};
+    char buffer[MAX_INBOX_LEN] = {0};
+
+    puts("\nGroup statistic\n");
+    puts("|Username - Group|");
+    fp = fopen("List of clients", "r");
+
+    while ((fgets(file_contain, MAX_INBOX_LEN / 2, fp)) != NULL)
+    {
+        strcat(buffer, file_contain);
+    }
+    puts(buffer);
+    bzero(file_contain, MAX_INBOX_LEN);
+    bzero(buffer, MAX_INBOX_LEN);
 }
 
-int main(int argc, char* argv[])
+int main(int argc, char *argv[])
 {
     signal(SIGUSR1, handler_sigusr1);
     signal(SIGUSR2, handler_sigusr2);
@@ -171,10 +235,12 @@ int main(int argc, char* argv[])
 
     struct args *Args = (struct args *)malloc(sizeof(struct args));
     int delay = 0;
+    int group_flag = 0;
 
-    char message[BUFF_SIZE] = { 0 };
-    char destination[MAX_USER_LEN] = { 0 };
-    char buff[BUFF_SIZE] = { 0 };
+    char message[BUFF_SIZE] = {0};
+    char destination[MAX_USER_LEN] = {0};
+    char user_group[MAX_USER_LEN] = {0};
+    char buff[BUFF_SIZE] = {0};
 
     pthread_t get_user;
 
@@ -191,7 +257,7 @@ int main(int argc, char* argv[])
     socket_for_username(get_user);
 
     socklen_t sockaddr_len = sizeof(struct sockaddr_in);
-    
+
     /* Create TCP socket */
     int listenfd = socket(AF_INET, SOCK_STREAM, 0);
     if (listenfd == ERROR)
@@ -199,7 +265,7 @@ int main(int argc, char* argv[])
         perror("SERV_TCP_sock_err");
         exit(EXIT_FAILURE);
     }
-    
+
     if (bind(listenfd, (struct sockaddr *)&server, sizeof(server)) == ERROR)
     {
         perror("SERV_TCP_bind_err");
@@ -221,7 +287,7 @@ int main(int argc, char* argv[])
         perror("SERV_UDP_bind_err");
         exit(EXIT_FAILURE);
     }
-    
+
     FD_ZERO(&rset);
 
     /* maximum num of fd ready */
@@ -233,20 +299,20 @@ int main(int argc, char* argv[])
         FD_SET(udpfd, &rset);
 
         int nready = select(maxfd, &rset, NULL, NULL, NULL);
-        /* wait first socket that start listen */        
+        /* wait first socket that start listen */
         if (FD_ISSET(listenfd, &rset))
         {
-            int connfd = accept(listenfd, (struct sockaddr*)&client, &len);
+            int connfd = accept(listenfd, (struct sockaddr *)&client, &len);
             if (connfd == ERROR)
             {
                 perror("SERV_accept_err");
                 exit(EXIT_FAILURE);
             }
-
+            recvd_tcp_msg++;
+            printf("\n%d\n", recvd_tcp_msg);
             if ((childpid = fork()) == 0)
             {
                 close(listenfd);
-
                 bzero(buff, BUFF_SIZE);
 
                 int rcv = recv(connfd, buff, BUFF_SIZE, 0);
@@ -256,24 +322,35 @@ int main(int argc, char* argv[])
                     exit(EXIT_FAILURE);
                 }
 
-                sscanf(buff, "%s\n%s\n%s",
-                    destination,
-                    username,
-                    message);
+                if (strstr(buff, "TOGROUP:") != NULL)
+                {
+                    group_flag = 1;
+                    sscanf(buff, "TOGROUP:%s\n%s\n%s",
+                           user_group,
+                           username,
+                           message);
+                    strcpy(destination, user_group);
+                }
+                else
+                {
+                    sscanf(buff, "%s\n%s\n%s",
+                           destination,
+                           username,
+                           message);
+                }
 
                 if (strcmp(log_level, "1") == EQUAL)
                 {
-                    printf("Message to %s\nFrom %s: %s\n", 
-                        destination, 
-                        username,
-                        message);
+                    printf("Message to %s\nFrom %s: %s\n",
+                           destination,
+                           username,
+                           message);
                 }
 
-                sprintf(username_f, "clients/%s", destination);
+                sprintf(username_f, "clients_inbox/%s", destination);
                 fp = fopen(username_f, "a");
                 fprintf(fp, "%s: %s\n", username, message);
                 fclose(fp);
-                recvd_tcp_msg++;
                 bzero(destination, MAX_USER_LEN);
                 bzero(message, BUFF_SIZE);
                 bzero(username_f, MAX_USERF_LEN);
@@ -285,45 +362,54 @@ int main(int argc, char* argv[])
             close(connfd);
         }
 
-        if (FD_ISSET(udpfd, &rset)) 
+        if (FD_ISSET(udpfd, &rset))
         {
             int recvv = recvfrom(udpfd, buff, BUFF_SIZE, 0,
-                    (struct sockaddr*)&client, &len);
-        
+                                 (struct sockaddr *)&client, &len);
+            recvd_udp_msg++;
+            printf("\n%d\n", recvd_udp_msg);
             if (strstr(buff, "DELAY:") != NULL)
             {
                 pthread_t delay_sender;
                 sscanf(buff, "DELAY:%d\n%s\n%s\n%s",
-                    &delay,
-                    destination,
-                    username,
-                    message);
-                
-                Args->delay = delay; 
-                strcat(Args->username,username);
-                sprintf(Args->username_f, "clients/%s", destination);
+                       &delay,
+                       destination,
+                       username,
+                       message);
+
+                Args->delay = delay;
+                strcat(Args->username, username);
+                sprintf(Args->username_f, "clients_inbox/%s", destination);
                 strcat(Args->message, message);
-                pthread_create(&delay_sender, NULL, send_with_delay, (void *) Args);
+                pthread_create(&delay_sender, NULL, send_with_delay, (void *)Args);
                 free(Args);
             }
-            
+            else if (strstr(buff, "TOGROUP:") != NULL)
+            {
+                group_flag = 1;
+                sscanf(buff, "TOGROUP:%s\n%s\n%s",
+                       user_group,
+                       username,
+                       message);
+                strcpy(destination, user_group);
+            }
+
             else
             {
                 sscanf(buff, "%s\n%s\n%s",
-                    destination,
-                    username,
-                    message);
-            
-                if (strcmp(log_level, "1") == EQUAL)
-                {
-                    printf("Message to %s\nFrom %s: %s\n", destination, username, message);
-                }
-                sprintf(username_f, "clients/%s", destination);
-                fp = fopen(username_f, "a");
-                fprintf(fp, "%s: %s\n", username, message);
-                fclose(fp);
+                       destination,
+                       username,
+                       message);
             }
-            recvd_udp_msg++;
+            if (strcmp(log_level, "1") == EQUAL)
+            {
+                printf("Message to %s\nFrom %s: %s\n", destination, username, message);
+            }
+            sprintf(username_f, "clients_inbox/%s", destination);
+            fp = fopen(username_f, "a");
+            fprintf(fp, "%s: %s\n", username, message);
+            fclose(fp);
+
             bzero(destination, MAX_USER_LEN);
             bzero(message, BUFF_SIZE);
             bzero(username_f, MAX_USERF_LEN);
