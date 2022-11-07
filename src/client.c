@@ -36,15 +36,7 @@ void help()
 void print_menu()
 {
     printf("\nUser: %s\n", username);
-    if (strcmp(group, " ") == 0)
-    {
-        puts("Not in group");
-    }
-
-    else
-    {
-        printf("Group: \"%s\"\n", group);
-    }
+    printf("Group: \"%s\"\n", group);
 
     printf("\nChoose action:\n");
     printf("1 - Check inbox\n");
@@ -152,8 +144,11 @@ int main(int argc, char *argv[])
                 {
                     sprintf(inbox_req, "%s=inbox", group);
                 }
+                else
+                {
+                    sprintf(inbox_req, "%s=inbox", username);
+                }
             }
-
             else
             {
                 sprintf(inbox_req, "%s=inbox", username);
@@ -319,8 +314,8 @@ int main(int argc, char *argv[])
 
             sendto(namefd, (const char *)user_plus_group, strlen(user_plus_group), 0,
                    (const struct sockaddr *)&server_user, sizeof(server_user));
-            
-            bzero(user_plus_group, MAX_USERF_LEN); 
+
+            bzero(user_plus_group, MAX_USERF_LEN);
             printf("\nChoose group \"%s\"\n", group);
             print_menu();
             break;
@@ -343,7 +338,7 @@ int main(int argc, char *argv[])
             sprintf(user_plus_group, "%s - %s", username, group);
             sendto(namefd, (const char *)user_plus_group, strlen(user_plus_group), 0,
                    (const struct sockaddr *)&server_user, sizeof(server_user));
-            
+
             print_menu();
             break;
 
