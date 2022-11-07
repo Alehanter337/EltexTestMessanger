@@ -11,3 +11,4 @@ clean:
 	echo "_" >> clients_inbox/client.test 
 	rm -f groups/*
 	echo "_" >> groups/group.test
+	rm "List of clients"

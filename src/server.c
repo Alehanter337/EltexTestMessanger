@@ -69,7 +69,11 @@ void config_parse(char *file_path)
     }
     else
     {
-        printf("Bad config");
+        if (strcmp(log_level, "1") == EQUAL)
+        {
+            printf("Bad config");
+        }
+
         exit(EXIT_FAILURE);
     }
 }
@@ -139,17 +143,26 @@ void *get_user_func()
             sprintf(username_f, "clients_inbox/%s", username);
 
             fp = fopen(username_f, "r");
-
-            while ((fgets(inbox, MAX_INBOX_LEN / 2, fp)) != NULL)
+            if (!fp)
             {
-                strcat(inbox_buff, inbox);
+                if (strcmp(log_level, "1") == EQUAL)
+                {
+                    puts("No such inbox file");
+                }
+                strcat(inbox_buff, "No such inbox file");
             }
-            if (strcmp(log_level, "1") == EQUAL)
+            else
             {
-                puts(inbox_buff);
+                while ((fgets(inbox, MAX_INBOX_LEN / 2, fp)) != NULL)
+                {
+                    strcat(inbox_buff, inbox);
+                }
+                if (strcmp(log_level, "1") == EQUAL)
+                {
+                    puts(inbox_buff);
+                }
+                fclose(fp);
             }
-            fclose(fp);
-
             sendto(namefd, (const char *)inbox_buff, BUFF_SIZE, 0,
                    (struct sockaddr *)&client, sizeof(client));
 
@@ -165,11 +178,11 @@ void *get_user_func()
 
             if (strcmp(log_level, "1") == EQUAL)
             {
-                printf("\n%s - %s connected to server!\n", username, group);
+                printf("\n%s - %s on server!\n", username, group);
             }
 
             sprintf(username_f, "clients_inbox/%s", username);
-            
+
             fp = fopen(username_f, "a");
             fclose(fp);
 
@@ -177,7 +190,7 @@ void *get_user_func()
 
             while ((fgets(list_of_clients, MAX_INBOX_LEN / 2, fp)) != NULL)
             {
-                if (strstr (list_of_clients, username) == NULL)
+                if (strstr(list_of_clients, username) == NULL)
                 {
                     strcat(delete_sub_buff, list_of_clients);
                 }
@@ -185,7 +198,7 @@ void *get_user_func()
             fclose(fp);
             fp = fopen("List of clients", "w");
 
-            sprintf(user_plus_group, "%s - %s\n", username, group);        
+            sprintf(user_plus_group, "%s - %s\n", username, group);
             strcat(delete_sub_buff, user_plus_group);
             fprintf(fp, "%s", delete_sub_buff);
 
@@ -240,7 +253,6 @@ int main(int argc, char *argv[])
         {
             if (strcmp(argv[i], "-c") == 0)
             {
-                puts(argv[i]);
                 config_parse(argv[i + 1]);
             }
         }
@@ -346,7 +358,7 @@ int main(int argc, char *argv[])
                 if (strstr(buff, "TOGROUP:") != NULL)
                 {
                     group_flag = 1;
-                    sscanf(buff, "TOGROUP:%s\n%s\n%s",
+                    sscanf(buff, "TOGROUP:%s\n%s\n%[^\t\n]",
                            user_group,
                            username,
                            message);
@@ -354,7 +366,7 @@ int main(int argc, char *argv[])
                 }
                 else
                 {
-                    sscanf(buff, "%s\n%s\n%s",
+                    sscanf(buff, "%s\n%s\n%[^\t\n]",
                            destination,
                            username,
                            message);
@@ -362,7 +374,7 @@ int main(int argc, char *argv[])
 
                 if (strcmp(log_level, "1") == EQUAL)
                 {
-                    printf("Message to %s\nFrom %s: %s\n",
+                    printf("\nMessage to %s\nFrom %s: %s\n",
                            destination,
                            username,
                            message);
@@ -388,11 +400,10 @@ int main(int argc, char *argv[])
             int recvv = recvfrom(udpfd, buff, BUFF_SIZE, 0,
                                  (struct sockaddr *)&client, &len);
             recvd_udp_msg++;
-
             if (strstr(buff, "DELAY:") != NULL)
             {
                 pthread_t delay_sender;
-                sscanf(buff, "DELAY:%d\n%s\n%s\n%s",
+                sscanf(buff, "DELAY:%d\n%s\n%s\n%[^\t\n]",
                        &delay,
                        destination,
                        username,
@@ -405,27 +416,31 @@ int main(int argc, char *argv[])
                 pthread_create(&delay_sender, NULL, send_with_delay, (void *)Args);
                 free(Args);
             }
-            else if (strstr(buff, "TOGROUP:") != NULL)
-            {
-                group_flag = 1;
-                sscanf(buff, "TOGROUP:%s\n%s\n%s",
-                       user_group,
-                       username,
-                       message);
-                strcpy(destination, user_group);
-            }
-
             else
             {
-                sscanf(buff, "%s\n%s\n%s",
-                       destination,
-                       username,
-                       message);
+                if (strstr(buff, "TOGROUP:") != NULL)
+                {
+                    group_flag = 1;
+                    sscanf(buff, "TOGROUP:%s\n%s\n%[^\t\n]",
+                           user_group,
+                           username,
+                           message);
+                    strcpy(destination, user_group);
+                }
+                else
+                {
+                    sscanf(buff, "%s\n%s\n%[^\t\n]",
+                           destination,
+                           username,
+                           message);
+                }
+
+                if (strcmp(log_level, "1") == EQUAL)
+                {
+                    printf("\nMessage to %s\nFrom %s: %s\n", destination, username, message);
+                }
             }
-            if (strcmp(log_level, "1") == EQUAL)
-            {
-                printf("Message to %s\nFrom %s: %s\n", destination, username, message);
-            }
+
             sprintf(username_f, "clients_inbox/%s", destination);
             fp = fopen(username_f, "a");
             fprintf(fp, "%s: %s\n", username, message);

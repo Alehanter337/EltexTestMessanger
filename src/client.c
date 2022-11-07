@@ -128,7 +128,7 @@ int main(int argc, char *argv[])
     int namefd = socket(AF_INET, SOCK_DGRAM, 0);
     sendto(namefd, (const char *)user_plus_group, strlen(user_plus_group), 0,
            (const struct sockaddr *)&server_user, sizeof(server_user));
-    close(namefd);
+
     bzero(user_plus_group, MAX_USERF_LEN);
 
     print_menu();
@@ -143,12 +143,15 @@ int main(int argc, char *argv[])
 
             printf("Check inbox\n");
 
-            puts("Check group inbox?\n1 - yes \n2 - no");
-            scanf("%d", &group_inbox_flag);
-
-            if (group_inbox_flag == 1)
+            if (strcmp(group, "NoGroup") != 0)
             {
-                sprintf(inbox_req, "%s=inbox", group);
+                puts("Check group inbox?\n1 - yes \n2 - no");
+
+                scanf("%d", &group_inbox_flag);
+                if (group_inbox_flag == 1)
+                {
+                    sprintf(inbox_req, "%s=inbox", group);
+                }
             }
 
             else
@@ -203,8 +206,11 @@ int main(int argc, char *argv[])
                     scanf("%d", &delay);
                 }
             }
-            puts("Send message to group?\n1 - Yes\n2 - No");
-            scanf("%d", &group_flag);
+            if (strcmp(group, "NoGroup") != 0)
+            {
+                puts("Send message to group?\n1 - Yes\n2 - No");
+                scanf("%d", &group_flag);
+            }
 
             printf("Enter your message: ");
             clean_choice(); // delete splitting message
@@ -261,6 +267,8 @@ int main(int argc, char *argv[])
             }
             bzero(message_nick, BUFF_SIZE);
             bzero(message, BUFF_SIZE);
+            message_choose = 0;
+            group_flag = 0;
             close(socket_desc);
             print_menu();
             break;
@@ -309,12 +317,9 @@ int main(int argc, char *argv[])
             fclose(fp);
             sprintf(user_plus_group, "%s - %s", username, group);
 
-
-            int namefd = socket(AF_INET, SOCK_DGRAM, 0);
             sendto(namefd, (const char *)user_plus_group, strlen(user_plus_group), 0,
                    (const struct sockaddr *)&server_user, sizeof(server_user));
             
-            close(namefd);
             bzero(user_plus_group, MAX_USERF_LEN); 
             printf("\nChoose group \"%s\"\n", group);
             print_menu();
@@ -335,11 +340,17 @@ int main(int argc, char *argv[])
             fprintf(fp, "NoGroup");
             fclose(fp);
             strcpy(group, "NoGroup");
+            sprintf(user_plus_group, "%s - %s", username, group);
+            sendto(namefd, (const char *)user_plus_group, strlen(user_plus_group), 0,
+                   (const struct sockaddr *)&server_user, sizeof(server_user));
+            
             print_menu();
             break;
 
         case 5:
+            close(namefd);
             return 0;
         }
     }
+    close(namefd);
 }

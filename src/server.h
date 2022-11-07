@@ -3,8 +3,8 @@
 #define EQUAL 0
 #define DEL_CLIENTS_LEN 8
 #define BUFF_SIZE 256
-#define MAX_USER_LEN 16
-#define MAX_USERF_LEN 32
+#define MAX_USER_LEN 32
+#define MAX_USERF_LEN 64
 #define MAX_ADDR_LEN 16
 #define MAX_INBOX_LEN 1024 
 #define MAX(X, Y) (((X) > (Y)) ? (X) : (Y))
