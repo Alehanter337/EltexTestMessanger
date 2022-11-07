@@ -3,6 +3,10 @@
 ![C](https://img.shields.io/badge/C-Solutions-blue.svg?style=flat&logo=c%2B%2B)
 [![Generic badge](https://img.shields.io/badge/Develop-unstable-yellowgreen)](https://shields.io/)
 
+# Tested on MacOS Big Sur 11.7 / Linux Ubuntu 20.04 / gcc version 9.4.0 
+
+`При сборке проекта имеются варнинги на команду sprintf, так в программе переменная group это массив char group[LEN], при char *group ошибок компиляции нет, но код написан именно под первый вариант переменной`
+
 # Функции программы
 
 Основная задача программы общение клиентов через сервер (брокер сообщений). Сообщения можно отправлять с или без гарантии доставки.
