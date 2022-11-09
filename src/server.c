@@ -119,9 +119,8 @@ void *get_user_func()
     int namefd = socket(AF_INET, SOCK_DGRAM, 0);
 
     server_user.sin_family = AF_INET;
-    server_user.sin_addr.s_addr = htonl(INADDR_ANY);
-    //inet_aton(server_address, &server.sin_addr);
-    
+    //server_user.sin_addr.s_addr = htonl(INADDR_ANY);
+    inet_aton(server_address, &server_user.sin_addr);
     server_user.sin_port = htons(1337);
 
     if (bind(namefd, (struct sockaddr *)&server_user, sizeof(server_user)) == ERROR)
@@ -275,8 +274,10 @@ int main(int argc, char *argv[])
             puts(server_address);
             break;           
         }
+        break;
     }
 
+    config_parse("src/config.conf");
     signal(SIGUSR1, handler_sigusr1);
     signal(SIGUSR2, handler_sigusr2);
 
@@ -298,8 +299,8 @@ int main(int argc, char *argv[])
     /* default socket's (TCP & UDP) for message settings */
     int port = 7331;
     server.sin_family = AF_INET;
-    server.sin_addr.s_addr = htonl(INADDR_ANY);
-    //inet_aton(server_address, &server.sin_addr);
+    //server.sin_addr.s_addr = htonl(INADDR_ANY);
+    inet_aton(server_address, &server.sin_addr);
     server.sin_port = htons(port);
 
     socket_for_username(get_user);
