@@ -1,5 +1,5 @@
 CC = gcc
-CFLAGS = -pthread
+CFLAGS = -pthread -pedantic
 
 default:
 	touch "List of clients"

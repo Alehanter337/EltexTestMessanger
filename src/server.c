@@ -198,7 +198,9 @@ void *get_user_func()
             fclose(fp);
             fp = fopen("List of clients", "w");
 
-            sprintf(user_plus_group, "%s - %s\n", username, group);
+            sprintf(user_plus_group, "%s - ", username);
+            strcat(user_plus_group, group);
+
             strcat(delete_sub_buff, user_plus_group);
             fprintf(fp, "%s", delete_sub_buff);
 

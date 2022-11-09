@@ -115,7 +115,8 @@ int main(int argc, char *argv[])
     server_user.sin_port = htons(1337);
     inet_aton(server_address, &server_user.sin_addr);
 
-    sprintf(user_plus_group, "%s - %s", username, group);
+    sprintf(user_plus_group, "%s - ", username);
+    strcat(user_plus_group, group);
 
     int namefd = socket(AF_INET, SOCK_DGRAM, 0);
     sendto(namefd, (const char *)user_plus_group, strlen(user_plus_group), 0,
@@ -310,8 +311,9 @@ int main(int argc, char *argv[])
             fp = fopen(username_f, "w");
             fprintf(fp, "%s", group);
             fclose(fp);
-            sprintf(user_plus_group, "%s - %s", username, group);
-
+            sprintf(user_plus_group, "%s - ", username);
+            strcat(user_plus_group, group);
+            
             sendto(namefd, (const char *)user_plus_group, strlen(user_plus_group), 0,
                    (const struct sockaddr *)&server_user, sizeof(server_user));
 
@@ -335,7 +337,9 @@ int main(int argc, char *argv[])
             fprintf(fp, "NoGroup");
             fclose(fp);
             strcpy(group, "NoGroup");
-            sprintf(user_plus_group, "%s - %s", username, group);
+            sprintf(user_plus_group, "%s - ", username);
+            strcat(user_plus_group, group);
+
             sendto(namefd, (const char *)user_plus_group, strlen(user_plus_group), 0,
                    (const struct sockaddr *)&server_user, sizeof(server_user));
 
