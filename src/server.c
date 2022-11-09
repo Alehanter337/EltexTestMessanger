@@ -7,10 +7,12 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <pthread.h>
+#include <arpa/inet.h>
 #include <ctype.h>
 
 #include "ParseConf/ParseConf.c"
 #include "server.h"
+
 
 struct args
 {
@@ -26,6 +28,7 @@ int recvd_tcp_msg = 0;
 char username[MAX_USER_LEN] = {0};
 char username_f[MAX_USERF_LEN] = {0};
 
+char *server_address = {0};
 char *log_level = {0};
 
 struct sockaddr_in client, server, server_user;
@@ -117,6 +120,8 @@ void *get_user_func()
 
     server_user.sin_family = AF_INET;
     server_user.sin_addr.s_addr = htonl(INADDR_ANY);
+    //inet_aton(server_address, &server.sin_addr);
+    
     server_user.sin_port = htons(1337);
 
     if (bind(namefd, (struct sockaddr *)&server_user, sizeof(server_user)) == ERROR)
@@ -248,21 +253,28 @@ void handler_sigusr2(int sig)
 
 int main(int argc, char *argv[])
 {
-    if (argc > 1)
+    int arg;
+    
+    if (argc <= NO_ARGS)
     {
-        puts("Using custom config");
-        for (int i = 0; i < argc; i++)
-        {
-            if (strcmp(argv[i], "-c") == 0)
-            {
-                config_parse(argv[i + 1]);
-            }
-        }
+        printf(RED "You need use ./server -c \"conf/path\" -i \"ip.addr\"\n");
+        exit(EXIT_FAILURE); 
     }
-    else
+    while ((arg = getopt(argc, argv, "c:i:")) != 1)
     {
-        puts("Using default config");
-        config_parse("src/config.conf");
+        switch (arg)
+        {
+        case 'c':
+            puts("Using config");
+            puts(optarg);
+            config_parse(optarg);
+            break;
+        case 'i':
+            puts("Choosen ip address interface");
+            server_address = optarg;
+            puts(server_address);
+            break;           
+        }
     }
 
     signal(SIGUSR1, handler_sigusr1);
@@ -287,6 +299,7 @@ int main(int argc, char *argv[])
     int port = 7331;
     server.sin_family = AF_INET;
     server.sin_addr.s_addr = htonl(INADDR_ANY);
+    //inet_aton(server_address, &server.sin_addr);
     server.sin_port = htons(port);
 
     socket_for_username(get_user);

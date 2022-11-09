@@ -7,6 +7,7 @@
 #define MAX_USERF_LEN 64
 #define MAX_ADDR_LEN 16
 #define MAX_INBOX_LEN 1024 
+#define RED "\033[31m"
 #define MAX(X, Y) (((X) > (Y)) ? (X) : (Y))
 
 void left_to_var(char buff[BUFF_SIZE], char destination[MAX_USER_LEN]);

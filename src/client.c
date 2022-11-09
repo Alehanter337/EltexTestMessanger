@@ -4,6 +4,7 @@
 #include <unistd.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
+#include <getopt.h>
 #include <arpa/inet.h>
 
 #include "ParseConf/ParseConf.c"
