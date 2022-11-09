@@ -73,23 +73,20 @@ int main(int argc, char *argv[])
         return 0;
     }
 
-    while ((arg = getopt(argc, argv, "u:s:")) != 1)
+    while ((arg = getopt(argc, argv, "u:s:")) != -1)
     {
         switch (arg)
         {
         case 'u':
-            printf("%s", optarg);
-            /*username = optarg;
+            username = optarg;
             if (strcmp(username, " ") == 0)
             {
                 puts("Error: Username is empty!");
                 exit(EXIT_FAILURE);
-            }*/
+            }
             break;
         case 's':
-            printf("%s", optarg);
-            /*
-            server_address = optarg;*/
+            server_address = optarg;
             break;
         }
     }

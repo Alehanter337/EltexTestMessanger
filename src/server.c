@@ -258,7 +258,7 @@ int main(int argc, char *argv[])
         printf(RED "You need use ./server -c \"conf/path\" -i \"ip.addr\"\n");
         exit(EXIT_FAILURE); 
     }
-    while ((arg = getopt(argc, argv, "c:i:")) != 1)
+    while ((arg = getopt(argc, argv, "c:i:")) != -1)
     {
         switch (arg)
         {
@@ -266,13 +266,12 @@ int main(int argc, char *argv[])
             puts("Using config");
             puts(optarg);
             config_parse(optarg);
-            //break;
+            break;
         case 'i':
             puts("Choosen ip address interface");
             server_address = optarg;
-            //break;           
+            break;           
         }
-        break;
     }
 
     signal(SIGUSR1, handler_sigusr1);
