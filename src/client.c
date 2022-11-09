@@ -12,9 +12,9 @@
 
 FILE *fp = NULL;
 
-char username[MAX_USER_LEN] = {0};
+// char username[MAX_USER_LEN] = {0};
 char username_f[MAX_USERF_LEN] = {0};
-
+char *username = {0};
 char group[MAX_USER_LEN] = {0};
 char group_f[MAX_USERF_LEN] = {0};
 
@@ -58,8 +58,9 @@ int main(int argc, char *argv[])
     int group_flag = 0;
     int group_inbox_flag = 0;
     int delay = 0;
+    int arg = 0;
 
-    char server_address[MAX_ADDR_LEN] = {0};
+    char *server_address = {0};
     char destination[MAX_USER_LEN] = {0};
     char message[BUFF_SIZE] = {0};
     char message_nick[BUFF_SIZE] = {0};
@@ -72,21 +73,24 @@ int main(int argc, char *argv[])
         return 0;
     }
 
-    for (int i = 0; i < argc; i++)
+    while ((arg = getopt(argc, argv, "u:s:")) != 1)
     {
-        if (strcmp(argv[i], "-s") == 0)
+        switch (arg)
         {
-            strcat(server_address, argv[i + 1]);
-        }
-
-        else if (strcmp(argv[i], "-u") == 0)
-        {
-            strcat(username, argv[i + 1]);
+        case 'u':
+            printf("%s", optarg);
+            /*username = optarg;
             if (strcmp(username, " ") == 0)
             {
                 puts("Error: Username is empty!");
                 exit(EXIT_FAILURE);
-            }
+            }*/
+            break;
+        case 's':
+            printf("%s", optarg);
+            /*
+            server_address = optarg;*/
+            break;
         }
     }
 
@@ -314,7 +318,7 @@ int main(int argc, char *argv[])
             fclose(fp);
             sprintf(user_plus_group, "%s - ", username);
             strcat(user_plus_group, group);
-            
+
             sendto(namefd, (const char *)user_plus_group, strlen(user_plus_group), 0,
                    (const struct sockaddr *)&server_user, sizeof(server_user));
 

@@ -119,7 +119,6 @@ void *get_user_func()
     int namefd = socket(AF_INET, SOCK_DGRAM, 0);
 
     server_user.sin_family = AF_INET;
-    //server_user.sin_addr.s_addr = htonl(INADDR_ANY);
     inet_aton(server_address, &server_user.sin_addr);
     server_user.sin_port = htons(1337);
 
@@ -252,7 +251,7 @@ void handler_sigusr2(int sig)
 
 int main(int argc, char *argv[])
 {
-    int arg;
+    int arg = 0;
     
     if (argc <= NO_ARGS)
     {
@@ -267,17 +266,15 @@ int main(int argc, char *argv[])
             puts("Using config");
             puts(optarg);
             config_parse(optarg);
-            break;
+            //break;
         case 'i':
             puts("Choosen ip address interface");
             server_address = optarg;
-            puts(server_address);
-            break;           
+            //break;           
         }
         break;
     }
 
-    config_parse("src/config.conf");
     signal(SIGUSR1, handler_sigusr1);
     signal(SIGUSR2, handler_sigusr2);
 
