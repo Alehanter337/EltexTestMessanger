@@ -3,4 +3,4 @@
 !*/
 *.inbox
 .DS_Store
-.vsdode/*
+.vscode/*
