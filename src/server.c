@@ -27,6 +27,7 @@ int recvd_tcp_msg = 0;
 
 char username[MAX_USER_LEN] = {0};
 char username_f[MAX_USERF_LEN] = {0};
+char inbox_username[MAX_USER_LEN] = {0};
 
 char *server_address = {0};
 char *log_level = {0};
@@ -48,17 +49,6 @@ char *str_remove(char *str, const char *sub)
         }
     }
     return str;
-}
-
-void left_to_var(char buff[BUFF_SIZE], char destination[MAX_USER_LEN])
-{
-    int i = 0;
-    while (buff[i] != '=')
-    {
-        destination[i] += buff[i];
-        buff[i] = ' ';
-        i++;
-    }
 }
 
 void config_parse(char *file_path)
@@ -131,19 +121,20 @@ void *get_user_func()
 
     while (1)
     {
+        char inbox_username[MAX_USER_LEN] = {0};
         /* recieve username when client connect */
         recvfrom(namefd, user_message, MAX_USER_LEN, 0,
                  (struct sockaddr *)&client, &len);
 
-        if (strstr(user_message, "inbox") != 0)
+        if (strstr(user_message, "inbox") != NULL)
         {
-            left_to_var(user_message, username);
+            sscanf(user_message, "inbox %s", inbox_username);
 
             if (strcmp(log_level, "1") == EQUAL)
             {
-                printf("%s request inbox\n", username);
+                printf("%s request inbox\n", inbox_username);
             }
-            sprintf(username_f, "clients_inbox/%s", username);
+            sprintf(username_f, "clients_inbox/%s", inbox_username);
 
             fp = fopen(username_f, "r");
             if (!fp)
@@ -173,7 +164,7 @@ void *get_user_func()
             bzero(inbox_buff, MAX_INBOX_LEN);
             bzero(user_message, BUFF_SIZE);
             bzero(username_f, MAX_USERF_LEN);
-            bzero(username, MAX_USER_LEN);
+            bzero(inbox_username, MAX_USER_LEN);
         }
         else
         {
