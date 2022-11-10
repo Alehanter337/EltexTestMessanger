@@ -255,7 +255,7 @@ int main(int argc, char *argv[])
     
     if (argc <= NO_ARGS)
     {
-        printf(RED "You need use ./server -c \"conf/path\" -i \"ip.addr\"\n");
+        printf(RED "You need use ./server -c <conf/path> -i <ip.addr>\n");
         exit(EXIT_FAILURE); 
     }
     while ((arg = getopt(argc, argv, "c:i:")) != -1)

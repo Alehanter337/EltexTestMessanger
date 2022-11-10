@@ -31,14 +31,13 @@ void clean_choice()
 
 void help()
 {
-    printf("Please run:\n./client -s \"server_address\" -u \"your_name\"\n");
+    printf(RED "Please run:\n./client -s <server.ip.address> -u <yourUsername>\n");
 }
 
 void print_menu()
 {
     printf("\nUser: %s\n", username);
     printf("Group: \"%s\"\n", group);
-
     printf("\nChoose action:\n");
     printf("1 - Check inbox\n");
     printf("2 - Send message\n");
