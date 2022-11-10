@@ -144,18 +144,18 @@ int main(int argc, char *argv[])
                 scanf("%d", &group_inbox_flag);
                 if (group_inbox_flag == 1)
                 {
-                    sprintf(inbox_req, "%s=inbox", group);
+                    sprintf(inbox_req, "inbox %s", group);
                 }
                 else
                 {
-                    sprintf(inbox_req, "%s=inbox", username);
+                    sprintf(inbox_req, "inbox %s", username);
                 }
             }
             else
             {
-                sprintf(inbox_req, "%s=inbox", username);
+                sprintf(inbox_req, "inbox %s", username);
             }
-
+            
             int inboxfd = socket(AF_INET, SOCK_DGRAM, 0);
 
             sendto(inboxfd, (const char *)inbox_req, strlen(inbox_req), 0,
