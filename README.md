@@ -1,9 +1,9 @@
 # Messanger
 
-![C](https://img.shields.io/badge/C-Solutions-blue.svg?style=flat&logo=c%2B%2B)
+![C](https://img.shields.io/badge/C-Solution-blue.svg?style=flat&logo=C%2B%2B)
 [![Generic badge](https://img.shields.io/badge/Develop-unstable-yellowgreen)](https://shields.io/)
 
-# Tested on MacOS Big Sur 11.7 / Linux Ubuntu 20.04 / gcc version 9.4.0 
+`Tested on MacOS Big Sur 11.7 / Linux Ubuntu 20.04 / gcc version 9.4.0`
 
 
 # Функции программы
@@ -36,16 +36,14 @@ Choose action:
 
 # Как храняться данные
 
--Со стороны сервера для каждого клиента в директории clients_inbox/ формируется файл с названием username, в файле его входящиме сообщения.
-
+* Со стороны сервера для каждого клиента в директории **clients_inbox/** формируется файл с названием **username**, в файле его входящие сообщения.
 При запросе от клиента входящих сообщений - сервер отправляет содержимое данного файла.
 
--Со стороны клиента, при запуске программы в директории group/ формируется файл с названием username, в файле его группа. При смене или выходе из группы файл обновляется. Так же смена группы отправляется серверу, который формирует файл "List of clients" вида:
+* Со стороны клиента, при запуске программы в директории **group/** формируется файл с названием **username**, в файле его **группа**. При смене или выходе из группы файл обновляется. Так же смена группы отправляется серверу, который формирует файл **"List of clients"** вида:
 
-user1 - Alpha
+`user1 - Alpha`
 
-user2 - Beta
-
+`user2 - Beta`
 
 # Сборка программы
 
@@ -61,19 +59,26 @@ user2 - Beta
 
 Запуск программы клиента:
 
-`./client -s <server.ip.addr> -u <yourUsername`
+`./client -flags:`
+
+`-s <server.ip.address>` / указание IP адреса сервера
+
+` -u <your_username>` / выбор имени пользователя (макс. 16 символов)
 
 Запуск сервера:
 
-`./server`
+`./server -flags:`
 
-Запуск сервера с использованием кастомного конфига:
+`-i <server.ip.address>` / выбор адреса, который будет слушать сервер
 
-`./server -i <ip.addr> -c <path/to/config>`
+`-c <path/to/config>` / указание пути до конфиг файла (дефолтный в src/config.conf)
+
+
+# Конфиг файл
 
 Настройка логирования через файл, стандартный файл config.conf находиться в папке src/
 
-`LOG_LEVEL=0 or 1`
+`LOG_LEVEL= 0 или 1`
 
 > где 0 - нет логирующей информации / 1 - вывод логирующей информации в терминал
 
