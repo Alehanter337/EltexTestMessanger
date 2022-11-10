@@ -61,7 +61,7 @@ user2 - Beta
 
 Запуск программы клиента:
 
-`./client -s "server_address" -u "your_username"`
+`./client -s <server.ip.addr> -u <yourUsername`
 
 Запуск сервера:
 
@@ -69,7 +69,7 @@ user2 - Beta
 
 Запуск сервера с использованием кастомного конфига:
 
-`./server -c "path/to/config"`
+`./server -i <ip.addr> -c <path/to/config>`
 
 Настройка логирования через файл, стандартный файл config.conf находиться в папке src/
 
