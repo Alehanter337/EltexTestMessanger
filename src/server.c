@@ -44,20 +44,20 @@ FILE *fp = NULL;
 int get_count_of_threads()
 {
     int threads_count = 0;
-    char line[MAX_INBOX_LEN] = { 0 };
-    FILE* fp = fopen("/proc/cpuinfo", "r");
-    
+    char line[MAX_INBOX_LEN] = {0};
+    FILE *fp = fopen("/proc/cpuinfo", "r");
+
     if (fp == NULL)
     {
         perror("fopen:/proc/cpuinfo");
         exit(EXIT_FAILURE);
     }
 
-    while(fgets(line, MAX_INBOX_LEN, fp) != NULL)
+    while (fgets(line, MAX_INBOX_LEN, fp) != NULL)
     {
         sscanf(line, "processor\t: %d", &threads_count);
     }
-    
+
     fclose(fp);
 
     threads_count++;
@@ -290,13 +290,12 @@ void *handle_tcp_message(void *msg)
     char user_group[MAX_USER_LEN] = {0};
     char *notif = {0};
 
-    int delay = 0;
     int group_flag = 0;
     int clnt_hash_msg = 0;
     int serv_hash_msg = 0;
 
     strcpy(buffer, ((struct message_cl *)msg)->full_msg);
-    
+
     if (strstr(buffer, "TOGROUP:") != NULL)
     {
         group_flag = 1;
@@ -344,7 +343,50 @@ void *handle_tcp_message(void *msg)
     bzero(username_f, MAX_USERF_LEN);
     bzero(buffer, BUFF_SIZE);
     serv_hash_msg = 0;
-    
+}
+
+void *handle_udp_message(void *msg)
+{
+    char buffer[BUFF_SIZE] = {0};
+    char message[BUFF_SIZE] = {0};
+    char destination[MAX_USER_LEN] = {0};
+    char user_group[MAX_USER_LEN] = {0};
+
+    int group_flag = 0;
+
+    strcpy(buffer, ((struct message_cl *)msg)->full_msg);
+
+    if (strstr(buffer, "TOGROUP:") != NULL)
+    {
+        group_flag = 1;
+        sscanf(buffer, "TOGROUP:%s\n%s\n%[^\t\n]",
+               user_group,
+               username,
+               message);
+        strcpy(destination, user_group);
+    }
+    else
+    {
+        sscanf(buffer, "%s\n%s\n%[^\t\n]",
+               destination,
+               username,
+               message);
+    }
+
+    if (strcmp(log_level, "1") == EQUAL)
+    {
+        printf("\nMessage to %s\nFrom %s: %s\n", destination, username, message);
+    }
+
+    sprintf(username_f, "clients_inbox/%s", destination);
+    fp = fopen(username_f, "a");
+    fprintf(fp, "%s: %s\n", username, message);
+    fclose(fp);
+
+    bzero(destination, MAX_USER_LEN);
+    bzero(message, BUFF_SIZE);
+    bzero(username_f, MAX_USERF_LEN);
+    bzero(buffer, BUFF_SIZE);
 }
 
 int main(int argc, char *argv[])
@@ -381,7 +423,6 @@ int main(int argc, char *argv[])
     int group_flag = 0;
     int clnt_hash_msg = 0;
     int serv_hash_msg = 0;
-
 
     int fd[2];
     int thread_count = get_count_of_threads();
@@ -519,38 +560,13 @@ int main(int argc, char *argv[])
             }
             else
             {
-                if (strstr(buff, "TOGROUP:") != NULL)
+                strcpy(Msg->full_msg, buff);
+                pthread_create(&clients[curr_thrd++], NULL, handle_udp_message, (void *)Msg);
+                if (curr_thrd < thread_count)
                 {
-                    group_flag = 1;
-                    sscanf(buff, "TOGROUP:%s\n%s\n%[^\t\n]",
-                           user_group,
-                           username,
-                           message);
-                    strcpy(destination, user_group);
-                }
-                else
-                {
-                    sscanf(buff, "%s\n%s\n%[^\t\n]",
-                           destination,
-                           username,
-                           message);
-                }
-
-                if (strcmp(log_level, "1") == EQUAL)
-                {
-                    printf("\nMessage to %s\nFrom %s: %s\n", destination, username, message);
+                    curr_thrd = 0;
                 }
             }
-
-            sprintf(username_f, "clients_inbox/%s", destination);
-            fp = fopen(username_f, "a");
-            fprintf(fp, "%s: %s\n", username, message);
-            fclose(fp);
-
-            bzero(destination, MAX_USER_LEN);
-            bzero(message, BUFF_SIZE);
-            bzero(username_f, MAX_USERF_LEN);
-            bzero(buff, BUFF_SIZE);
         }
     }
 }
