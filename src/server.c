@@ -13,7 +13,6 @@
 #include "ParseConf/ParseConf.c"
 #include "server.h"
 
-
 struct args
 {
     char username[MAX_USER_LEN];
@@ -36,6 +35,20 @@ struct sockaddr_in client, server, server_user;
 socklen_t len = sizeof(client);
 
 FILE *fp = NULL;
+
+int get_hash(const char *s)
+{
+    const int n = strlen(s);
+    const int p = 31, m = 1e9 + 7;
+    int hash = 0;
+    long p_pow = 1;
+    for (int i = 0; i < n; i++)
+    {
+        hash = (hash + (s[i] - 'a' + 1) * p_pow) % m;
+        p_pow = (p_pow * p) % m;
+    }
+    return hash;
+}
 
 char *str_remove(char *str, const char *sub)
 {
@@ -243,11 +256,11 @@ void handler_sigusr2(int sig)
 int main(int argc, char *argv[])
 {
     int arg = 0;
-    
+
     if (argc <= NO_ARGS)
     {
         printf(RED "You need use ./server -c <conf/path> -i <ip.addr>\n");
-        exit(EXIT_FAILURE); 
+        exit(EXIT_FAILURE);
     }
     while ((arg = getopt(argc, argv, "c:i:")) != -1)
     {
@@ -261,7 +274,7 @@ int main(int argc, char *argv[])
         case 'i':
             puts("Choosen ip address interface");
             server_address = optarg;
-            break;           
+            break;
         }
     }
 
@@ -271,10 +284,13 @@ int main(int argc, char *argv[])
     struct args *Args = (struct args *)malloc(sizeof(struct args));
     int delay = 0;
     int group_flag = 0;
+    int clnt_hash_msg = 0;
+    int serv_hash_msg = 0;
 
     char message[BUFF_SIZE] = {0};
     char destination[MAX_USER_LEN] = {0};
     char user_group[MAX_USER_LEN] = {0};
+
     char buff[BUFF_SIZE] = {0};
 
     pthread_t get_user;
@@ -286,7 +302,7 @@ int main(int argc, char *argv[])
     /* default socket's (TCP & UDP) for message settings */
     int port = 7331;
     server.sin_family = AF_INET;
-    //server.sin_addr.s_addr = htonl(INADDR_ANY);
+    // server.sin_addr.s_addr = htonl(INADDR_ANY);
     inet_aton(server_address, &server.sin_addr);
     server.sin_port = htons(port);
 
@@ -361,23 +377,37 @@ int main(int argc, char *argv[])
                 if (strstr(buff, "TOGROUP:") != NULL)
                 {
                     group_flag = 1;
-                    sscanf(buff, "TOGROUP:%s\n%s\n%[^\t\n]",
+                    sscanf(buff, "TOGROUP:%s\n%s\n%[^\t\n]%d",
                            user_group,
                            username,
-                           message);
+                           message,
+                           &clnt_hash_msg);
                     strcpy(destination, user_group);
                 }
                 else
                 {
-                    sscanf(buff, "%s\n%s\n%[^\t\n]",
+                    sscanf(buff, "%s\n%s\n%[^\t\n]%d",
                            destination,
                            username,
-                           message);
+                           message,
+                           &clnt_hash_msg);
                 }
 
+                int serv_hash_msg = get_hash(message);
+                char *notif = {0};
+
+                if(serv_hash_msg == clnt_hash_msg)
+                {
+                    notif = "The message is intact";
+                }
+                else
+                {
+                    notif = "The message is corruted";
+                }
                 if (strcmp(log_level, "1") == EQUAL)
                 {
-                    printf("\nMessage to %s\nFrom %s: %s\n",
+                    puts(notif);
+                    printf("Message to %s\nFrom %s: %s\n",
                            destination,
                            username,
                            message);
@@ -391,6 +421,7 @@ int main(int argc, char *argv[])
                 bzero(message, BUFF_SIZE);
                 bzero(username_f, MAX_USERF_LEN);
                 bzero(buff, BUFF_SIZE);
+                serv_hash_msg = 0;
 
                 close(connfd);
                 exit(EXIT_SUCCESS);
