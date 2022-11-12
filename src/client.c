@@ -20,6 +20,20 @@ char group_f[MAX_USERF_LEN] = {0};
 
 char user_plus_group[MAX_USERF_LEN] = {0};
 
+int get_hash(const char *s)
+{
+    const int n = strlen(s);
+    const int p = 31, m = 1e9 + 7;
+    int hash = 0;
+    long p_pow = 1;
+    for (int i = 0; i < n; i++)
+    {
+        hash = (hash + (s[i] - 'a' + 1) * p_pow) % m;
+        p_pow = (p_pow * p) % m;
+    }
+    return hash;
+}
+
 void clean_choice()
 {
     char s;
@@ -155,7 +169,7 @@ int main(int argc, char *argv[])
             {
                 sprintf(inbox_req, "inbox %s", username);
             }
-            
+
             int inboxfd = socket(AF_INET, SOCK_DGRAM, 0);
 
             sendto(inboxfd, (const char *)inbox_req, strlen(inbox_req), 0,
@@ -212,6 +226,7 @@ int main(int argc, char *argv[])
             printf("Enter your message: ");
             clean_choice(); // delete splitting message
             fgets(message, BUFF_SIZE, stdin);
+            message[strlen(message) - 1] = '\0';
 
             if (group_flag != 1)
             {
@@ -236,8 +251,17 @@ int main(int argc, char *argv[])
                     sprintf(message_nick, "%s\n%s\n", destination, username);
                 }
             }
+
+            if (message_choose == 1)
+            {
+                char *msg_buff = message;
+                puts("Hashing...");
+                int hash_msg = get_hash(message);
+                sprintf(msg_buff, "%s\n%d", message, hash_msg);
+            }
+
             strcat(message_nick, message);
-            puts(message_nick);
+
             if (socket_desc == ERROR)
             {
                 perror("CL_Socket_err");
@@ -254,14 +278,13 @@ int main(int argc, char *argv[])
                 break;
             }
 
-            printf("\n%s\n", message_nick);
-
             int snd = send(socket_desc, message_nick, BUFF_SIZE, 0);
             if (snd == ERROR)
             {
                 perror("CL_Send_err");
                 exit(EXIT_FAILURE);
             }
+
             bzero(message_nick, BUFF_SIZE);
             bzero(message, BUFF_SIZE);
             message_choose = 0;
