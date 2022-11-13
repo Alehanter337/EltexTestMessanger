@@ -191,14 +191,25 @@ void *get_user_func()
             {
                 while ((fgets(inbox, MAX_INBOX_LEN / 2, fp)) != NULL)
                 {
-                    strcat(inbox_buff, inbox);
+                    if (strcmp(inbox, "[Above messages have been read!]\n") != EQUAL)
+                    {
+                        strcat(inbox_buff, inbox);
+                    }
                 }
+
                 if (strcmp(log_level, "1") == EQUAL)
                 {
                     puts(inbox_buff);
                 }
                 fclose(fp);
+                if (strcmp(inbox, "[Above messages have been read!]\n") != EQUAL)
+                {
+                    fp = fopen(username_f, "w");
+                    fprintf(fp, "%s[Above messages have been read!]\n", inbox_buff);
+                    fclose(fp);
+                }
             }
+
             sendto(namefd, (const char *)inbox_buff, BUFF_SIZE, 0,
                    (struct sockaddr *)&client, sizeof(client));
 
@@ -208,6 +219,7 @@ void *get_user_func()
             bzero(username_f, MAX_USERF_LEN);
             bzero(inbox_username, MAX_USER_LEN);
         }
+
         else
         {
             sscanf(user_message, "%s - %s", username, group);
