@@ -62,7 +62,7 @@ void print_menu()
 
 int main(int argc, char *argv[])
 {
-    struct sockaddr_in server, server_user;
+    struct sockaddr_in server, server_user, server_stat;
 
     int socket_desc = 0;
     int group_choose = 0;
@@ -129,6 +129,10 @@ int main(int argc, char *argv[])
     server_user.sin_family = AF_INET;
     server_user.sin_port = htons(1337);
     inet_aton(server_address, &server_user.sin_addr);
+
+    server_stat.sin_family = AF_INET;
+    server_stat.sin_port = htons(1338);
+    inet_aton(server_address, &server_stat.sin_addr);
 
     sprintf(user_plus_group, "%s - ", username);
     strcat(user_plus_group, group);
@@ -284,8 +288,14 @@ int main(int argc, char *argv[])
                 perror("CL_Send_err");
                 exit(EXIT_FAILURE);
             }
-           /*recvfrom(socket_desc, (char *)inbox_out, MAX_INBOX_LEN,
-                     0, (struct sockaddr *)&server_user, &len);*/
+            int statfd = socket(AF_INET, SOCK_DGRAM, 0);
+            char delivery_status[MAX_USER_LEN];
+            socklen_t lenn = sizeof(server_stat);
+            recvfrom(statfd, (char *)delivery_status, MAX_USER_LEN,
+                     0, (struct sockaddr *)&server_stat, &lenn);
+            puts(delivery_status);
+            close(statfd);
+            bzero(delivery_status, MAX_USER_LEN);
             bzero(message_nick, BUFF_SIZE);
             bzero(message, BUFF_SIZE);
             message_choose = 0;

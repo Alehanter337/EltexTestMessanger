@@ -36,7 +36,7 @@ char inbox_username[MAX_USER_LEN] = {0};
 char *server_address = {0};
 char *log_level = {0};
 
-struct sockaddr_in client, server, server_user;
+struct sockaddr_in client, server, server_user, server_stat;
 socklen_t len = sizeof(client);
 
 FILE *fp = NULL;
@@ -318,6 +318,7 @@ void *handle_tcp_message(void *msg)
                &clnt_hash_msg);
         strcpy(destination, user_group);
     }
+
     else
     {
         sscanf(buffer, "%s\n%s\n%[^\t\n]%d",
@@ -345,6 +346,22 @@ void *handle_tcp_message(void *msg)
                username,
                message);
     }
+
+    int statfd = socket(AF_INET, SOCK_DGRAM, 0);
+
+    server_stat.sin_family = AF_INET;
+    inet_aton(server_address, &server_stat.sin_addr);
+    server_stat.sin_port = htons(1338);
+    if (bind(statfd, (struct sockaddr *)&server_stat, sizeof(server_stat)) == ERROR)
+    {
+        perror("name bind err");
+        exit(EXIT_FAILURE);
+    }
+    char delivery_status[MAX_USER_LEN] = "Message delivered!";
+
+    sendto(statfd, (const char *)delivery_status, BUFF_SIZE, 0,
+                   (struct sockaddr *)&server_stat, sizeof(server_stat));
+    close(statfd);
 
     sprintf(username_f, "clients_inbox/%s", destination);
     fp = fopen(username_f, "a");
