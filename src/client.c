@@ -284,7 +284,8 @@ int main(int argc, char *argv[])
                 perror("CL_Send_err");
                 exit(EXIT_FAILURE);
             }
-
+           /*recvfrom(socket_desc, (char *)inbox_out, MAX_INBOX_LEN,
+                     0, (struct sockaddr *)&server_user, &len);*/
             bzero(message_nick, BUFF_SIZE);
             bzero(message, BUFF_SIZE);
             message_choose = 0;
